@@ -20,9 +20,12 @@ struct Quadtree {
 
 typedef struct Quadtree Quadtree;
 
-Quadtree* quadtreeIntersectionEventList_make(CollisionWorld* collisionWorld);
+Quadtree* Quadtree_make(CollisionWorld* collisionWorld);
 
 void Quadtree_delete(Quadtree* quadtree);
+
+// populates the quadtree recursively starting at the root
+void populateQuadtree(Quadtree* quadtree);
 
 // Recursively finds all collisions in this quadtree, adds them to the eventList, 
 // and returns the number of collisions

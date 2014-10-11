@@ -128,6 +128,7 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
   IntersectionEventList intersectionEventList = IntersectionEventList_make();
   Quadtree* quadtree = Quadtree_make(collisionWorld);
+  populateQuadtree(quadtree);
   unsigned int numCollisions = detectCollisions(quadtree, intersectionEventList);
   
 
