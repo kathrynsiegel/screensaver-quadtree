@@ -8,12 +8,13 @@
 #include "Vec.h"
 #include "IntersectionEventList.h"
 
-Quadtree* Quadtree_new(Vec* upperLeft, Vec* lowerRight) {
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowerRight) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
   if (quadtree == NULL) {
     return NULL;
   }
 
+  quadtree->collisionWorld = collisionWorld;
   quadtree->upperLeft = upperLeft;
   quadtree->lowerRight = lowerRight;
   quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));

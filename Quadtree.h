@@ -10,6 +10,10 @@
 #define MAX_LINES_PER_NODE 10
 
 struct Quadtree {
+
+  // The CollisionWorld the Quadtree exists in
+  CollisionWorld* collisionWorld;
+  
   // The upper left corner of the Quadtree node
   Vec* upperLeft;
   
@@ -29,7 +33,7 @@ struct Quadtree {
 };
 typedef struct Quadtree Quadtree;
 
-Quadtree* Quadtree_new(Vec* upperLeft, Vec* lowerRight);
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowerRight);
 
 void Quadtree_delete(Quadtree* quadtree);
 
