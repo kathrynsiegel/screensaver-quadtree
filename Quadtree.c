@@ -4,63 +4,32 @@
  * Function definitions in Quadtree.h
  **/
  
-#include "Quadtree.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "CollisionWorld.h"
 #include "Line.h"
 #include "Vec.h"
 #include "IntersectionEventList.h"
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowerRight) {
+Quadtree* Quadtree_make(CollisionWorld* collisionWorld) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
   if (quadtree == NULL) {
     return NULL;
   }
 
   quadtree->collisionWorld = collisionWorld;
-  quadtree->upperLeft = upperLeft;
-  quadtree->lowerRight = lowerRight;
-  quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));
-  quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
-  quadtree->numOfLines = 0;
-  
-  quadtree->isLeaf = !shouldDivideTree(quadtree);
-  if (!(quadtree->isLeaf)){
-    divideTree(quadtree);
-  }
-  findLines(quadtree);
+  quadtree->root = malloc(sizeof(QuadtreeNode*));
   
   return quadtree;
 }
 
 void Quadtree_delete(Quadtree* quadtree){
-  if (!(quadtree->isLeaf)){
-    for (int i = 0; i < 4; i++) {
-      Quadtree_delete(quadtree->quadrants[i]);
-    }
-  }
-  free(quadtree->lines);
-  free(quadtree->quadrants);
+  QuadtreeNode_delete(quadtree->root);
+  free(quadtree->root);
   free(quadtree);
 }
 
-bool shouldDivideTree(Quadtree* quadtree){
-bool r = false;;
-return r;
-}
+// Recursively finds all collisions in this quadtree, adds them to the eventList, 
+// and returns the number of collisions
+unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList) {
 
-void divideTree(Quadtree* quadtree){}
-
-void findLines(Quadtree* quadtree){}
-
-void addLine(Quadtree* quadtree, Line* line){}
-
-unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
-unsigned int r = 0;
-return r;
 }
 
 
