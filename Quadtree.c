@@ -4,6 +4,12 @@
  * Function definitions in Quadtree.h
  **/
  
+#include "Quadtree.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "CollisionWorld.h"
 #include "Line.h"
 #include "Vec.h"
 #include "IntersectionEventList.h"
@@ -41,14 +47,20 @@ void Quadtree_delete(Quadtree* quadtree){
   free(quadtree);
 }
 
-bool shouldDivideTree(Quadtree* quadtree){}
+bool shouldDivideTree(Quadtree* quadtree){
+bool r = false;;
+return r;
+}
 
-void divideTree(Quadtree* quadtree, Quadtree** quadrants){}
+void divideTree(Quadtree* quadtree){}
 
 void findLines(Quadtree* quadtree){}
 
 void addLine(Quadtree* quadtree, Line* line){}
 
-unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){}
+unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
+unsigned int r = 0;
+return r;
+}
 
 

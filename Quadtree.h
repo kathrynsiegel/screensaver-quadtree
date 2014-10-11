@@ -3,12 +3,17 @@
  *
  **/
 
+#ifndef QUADTREE_H_
+#define QUADTREE_H_
+
+#include "CollisionWorld.h"
 #include "Line.h"
 #include "Vec.h"
 #include "IntersectionEventList.h"
 
 #define MAX_LINES_PER_NODE 10
 
+typedef struct Quadtree Quadtree;
 struct Quadtree {
 
   // The CollisionWorld the Quadtree exists in
@@ -31,7 +36,7 @@ struct Quadtree {
   bool isLeaf;
   
 };
-typedef struct Quadtree Quadtree;
+
 
 Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowerRight);
 
@@ -41,7 +46,7 @@ void Quadtree_delete(Quadtree* quadtree);
 bool shouldDivideTree(Quadtree* quadtree);
 
 // Instantiates and fills the four quadrants of the tree
-void divideTree(Quadtree* quadtree, Quadtree** quadrants);
+void divideTree(Quadtree* quadtree);
 
 // Finds all of the lines that should belong to this quadtree level and adds them
 void findLines(Quadtree* quadtree);
@@ -53,3 +58,4 @@ void addLine(Quadtree* quadtree, Line* line);
 // and returns the number of collisions
 unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList);
 
+#endif  // QUADTREE_H_
