@@ -37,7 +37,6 @@ struct Quadtree {
   
 };
 
-
 Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowerRight);
 
 void Quadtree_delete(Quadtree* quadtree);

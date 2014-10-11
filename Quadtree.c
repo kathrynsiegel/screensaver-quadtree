@@ -23,32 +23,34 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowe
   quadtree->collisionWorld = collisionWorld;
   quadtree->upperLeft = upperLeft;
   quadtree->lowerRight = lowerRight;
-  quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));
-  quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
   quadtree->numOfLines = 0;
   
   quadtree->isLeaf = !shouldDivideTree(quadtree);
-  if (!(quadtree->isLeaf)){
+  if (quadtree->isLeaf){
+    quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));
+    findLines(quadtree);
+  } else {
+    quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
     divideTree(quadtree);
   }
-  findLines(quadtree);
   
   return quadtree;
 }
 
 void Quadtree_delete(Quadtree* quadtree){
-  if (!(quadtree->isLeaf)){
+  if (quadtree->isLeaf){
+     free(quadtree->lines);
+  } else {
     for (int i = 0; i < 4; i++) {
       Quadtree_delete(quadtree->quadrants[i]);
     }
+    free(quadtree->quadrants);
   }
-  free(quadtree->lines);
-  free(quadtree->quadrants);
   free(quadtree);
 }
 
 bool shouldDivideTree(Quadtree* quadtree){
-bool r = false;;
+bool r = false;
 return r;
 }
 
