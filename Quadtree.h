@@ -11,7 +11,7 @@
 #include "Vec.h"
 #include "IntersectionEventList.h"
 
-#define MAX_LINES_PER_NODE 10
+#define MAX_LINES_PER_NODE 100
 
 typedef struct Quadtree Quadtree;
 struct Quadtree {
@@ -20,10 +20,10 @@ struct Quadtree {
   CollisionWorld* collisionWorld;
   
   // The upper left corner of the Quadtree node
-  Vec* upperLeft;
+  Vec upperLeft;
   
   // The lower right corner of the Quadtree node
-  Vec* lowerRight;
+  Vec lowerRight;
 
   // Array containing all of the lines that are part of this level of the Quadtree
   Line** lines;
@@ -37,7 +37,7 @@ struct Quadtree {
   
 };
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec* upperLeft, Vec* lowerRight);
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight);
 
 void Quadtree_delete(Quadtree* quadtree);
 
@@ -51,7 +51,10 @@ void divideTree(Quadtree* quadtree);
 void findLines(Quadtree* quadtree);
 
 // Adds the line to the quadtree structure
-void addLine(Quadtree* quadtree, Line* line);
+bool addLine(Quadtree* quadtree, Line* line);
+
+// Checks if the moving line is in the quadtree
+bool isLineInQuadtree(Quadtree* quadtree, Line* line);
 
 // Recursively finds all collisions in this quadtree, adds them to the eventList, 
 // and returns the number of collisions
