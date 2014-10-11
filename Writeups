@@ -1,0 +1,8 @@
+1: Number of frames = 4000
+---- RESULTS ----
+Elapsed execution time: 108.684821s
+1262 Line-Wall Collisions
+19806 Line-Line Collisions
+---- END RESULTS ----
+
+2. This is not a problem from the quad tree. This line will exist at the top level of the quad tree, and can be passed into each of the leaves when detecting collisions in those leaves. This will still effectively speed up the collision detection.
