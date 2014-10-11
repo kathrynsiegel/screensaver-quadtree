@@ -129,7 +129,7 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
   IntersectionEventList intersectionEventList = IntersectionEventList_make();
   Quadtree* quadtree = Quadtree_make(collisionWorld);
   populateQuadtree(quadtree);
-  unsigned int numCollisions = detectCollisions(quadtree, intersectionEventList);
+  // unsigned int numCollisions = detectCollisions(quadtree, intersectionEventList);
   
 
   // Test all line-line pairs to see if they will intersect before the

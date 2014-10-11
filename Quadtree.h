@@ -3,12 +3,17 @@
  *
  **/
 
+#ifndef QUADTREE_H_
+#define QUADTREE_H_
+
 #include "Line.h"
 #include "Vec.h"
 #include "IntersectionEventList.h"
 #include "QuadtreeNode.h"
 
 #define MAX_LINES_PER_NODE 10
+
+typedef struct Quadtree Quadtree;
 
 struct Quadtree {
   // The CollisionWorld the Quadtree exists in
@@ -17,8 +22,6 @@ struct Quadtree {
   // The root of the tree
   QuadtreeNode* root;
 };
-
-typedef struct Quadtree Quadtree;
 
 Quadtree* Quadtree_make(CollisionWorld* collisionWorld);
 
@@ -31,3 +34,4 @@ void populateQuadtree(Quadtree* quadtree);
 // and returns the number of collisions
 unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList);
 
+#endif

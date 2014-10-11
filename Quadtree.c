@@ -3,11 +3,14 @@
  *
  * Function definitions in Quadtree.h
  **/
+
+#include <stdlib.h>
+#include <stdio.h>
  
 #include "Line.h"
 #include "Vec.h"
 #include "IntersectionEventList.h"
-#include "QuadtreeNode.h"
+#include "Quadtree.h"
 
 Quadtree* Quadtree_make(CollisionWorld* collisionWorld) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
@@ -51,7 +54,7 @@ void populateQuadtree(Quadtree* quadtree) {
 // Recursively finds all collisions in this quadtree, adds them to the eventList, 
 // and returns the number of collisions
 unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList) {
-  return detectNodeCollisions(quadtree->root);
+  return 0; // detectNodeCollisions(quadtree->root);
 }
 
 
