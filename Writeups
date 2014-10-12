@@ -31,8 +31,7 @@ intersection.
 for 4000 frames. We concluded this was due the to overhead of recursing too deeply to divide the
 collisions up, which was not worth the small decrease in the O(N^2) base case.
 
-7. Our first optimization was to try rewriting a method for calculating when a line intersects a
-polygon. Results:...
+7. Our first optimization was to try rewriting a method for calculating when two lines intersect. We attempted to implement an algorithm that would check if each endpoint of one line was on either side of the other line. However, when addressing edge cases such as when one line's endpoint was on the other line, we ran into errors with floating point number rounding. On these edgecases, the best alternative was to resort to the original intersection detection algorithm, and the overall result was a slower runtime. As a result, we did not continue to use this updated line intersection detection function.
 
 We also tried precomputing the length of each line. This did not result in a significant speedup.
 
@@ -43,6 +42,14 @@ We also added a preliminary check to our function that checks if we need to incl
 This check sees if all of the points of the parallelogram form by the line are off to any side of the box
 to quickly exclude it. This reduces the number of times we need to calculate pointInParallelogram and
 intersectLines, and led to a 30% speedup.
+
+Next, we tried inlining all of the functions. We found that inlining the non recursive IntersectionDetection, Quadtree, and Vec file functions led to a speedup, but not inlining the CollisionWorld and EventList functions.
+
+We decreased the number of function calls in our check of whether or not a parallelogram that represents a moving line intersects a box represented by a leaf in the quadtree. We only have 16 function calls--eight to determine whether one corner of one shape lies within another shap, and eight to determine whether the lines of the quadtree square intersects any part of the parallelogram that represents the moving line.
+
+Also, we created a new method that returns whether or not an intersection exists before checking what type of intersection exists. We called this method fastIntersect, and it resulted in several seconds speedup.
+
+Finally, we reordered function calls in the intersect method and rewrote part of the method to allow for more efficient checking of the intersect type. 
 
 8.
   %   cumulative   self              self     total
