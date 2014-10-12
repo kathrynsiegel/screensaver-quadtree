@@ -56,6 +56,8 @@ struct Line {
 
   // The line's current velocity, in units of pixels per time step.
   Vec velocity;
+  
+  vec_dimension length;
 
   Color color;  // The line's color.
 

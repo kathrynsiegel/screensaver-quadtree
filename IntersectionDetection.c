@@ -55,17 +55,17 @@ IntersectionType intersect(Line *l1, Line *l2, double time) {
   bool top_intersected = false;
   bool bottom_intersected = false;
 
-  if (fastIntersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
+  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
     return ALREADY_INTERSECTED;
   }
-  if (fastIntersectLines(l1->p1, l1->p2, p1, p2)) {
+  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
     num_line_intersections++;
   }
-  if (fastIntersectLines(l1->p1, l1->p2, p1, l2->p1)) {
+  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
     num_line_intersections++;
     top_intersected = true;
   }
-  if (fastIntersectLines(l1->p1, l1->p2, p2, l2->p2)) {
+  if (intersectLines(l1->p1, l1->p2, p2, l2->p2)) {
     num_line_intersections++;
     bottom_intersected = true;
   }

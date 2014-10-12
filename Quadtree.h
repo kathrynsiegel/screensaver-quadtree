@@ -13,8 +13,11 @@
 
 #define MAX_LINES_PER_NODE 160
 
+// need to forward reference due to circularity of these structs
+typedef struct CollisionWorld CollisionWorld;
 typedef struct Quadtree Quadtree;
-struct Quadtree {
+
+typedef struct Quadtree {
 
   // The CollisionWorld the Quadtree exists in
   CollisionWorld* collisionWorld;
@@ -26,6 +29,7 @@ struct Quadtree {
   Vec lowerRight;
 
   // Array containing all of the lines that are part of this level of the Quadtree
+  // This array is only comprehensive if the node is a leaf
   Line** lines;
   unsigned int numOfLines;
 
@@ -34,18 +38,24 @@ struct Quadtree {
   
   // True if the Quadtree contains less than MAX_LINES_PER_NODE lines
   bool isLeaf;
-  
-};
+} Quadtree_t;
+
+
 
 Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight);
 
 void Quadtree_delete(Quadtree* quadtree);
 
+bool Quadtree_update(Quadtree* quadtree);
+
 // Returns true if this tree needs to divide itself into quadrants
+// and adds all lines in this quadtree
 bool shouldDivideTree(Quadtree* quadtree);
 
 // Instantiates and fills the four quadrants of the tree
 void divideTree(Quadtree* quadtree);
+
+unsigned int getNumLinesUnder(Quadtree* quadtree);
 
 // Finds all of the lines that should belong to this quadtree level and adds them
 void findLines(Quadtree* quadtree);

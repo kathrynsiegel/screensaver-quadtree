@@ -26,8 +26,13 @@
 
 #include "Line.h"
 #include "IntersectionDetection.h"
+#include "Quadtree.h"
 
-struct CollisionWorld {
+// need to forward reference due to circularity of these structs
+typedef struct Quadtree Quadtree;
+typedef struct CollisionWorld CollisionWorld;
+
+typedef struct CollisionWorld {
   // Time step used for simulation
   double timeStep;
 
@@ -35,13 +40,16 @@ struct CollisionWorld {
   // This CollisionWorld owns the Line* lines.
   Line** lines;
   unsigned int numOfLines;
+  
+  struct Quadtree* quadtree;
 
   // Record the total number of line-wall collisions.
   unsigned int numLineWallCollisions;
 
   // Record the total number of line-line intersections.
   unsigned int numLineLineCollisions;
-};
+} CollisionWorld_t;
+
 typedef struct CollisionWorld CollisionWorld;
 
 CollisionWorld* CollisionWorld_new(const unsigned int capacity);

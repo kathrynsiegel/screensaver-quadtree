@@ -46,6 +46,8 @@ CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   collisionWorld->timeStep = 0.5;
   collisionWorld->lines = malloc(capacity * sizeof(Line*));
   collisionWorld->numOfLines = 0;
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  
   return collisionWorld;
 }
 
@@ -54,6 +56,7 @@ void CollisionWorld_delete(CollisionWorld* collisionWorld) {
     free(collisionWorld->lines[i]);
   }
   free(collisionWorld->lines);
+  Quadtree_delete(collisionWorld->quadtree);
   free(collisionWorld);
 }
 
@@ -62,8 +65,13 @@ unsigned int CollisionWorld_getNumOfLines(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
+  // precalculate the velocity of the line
+  line->length = Vec_length(Vec_subtract(line->p1, line->p2));
   collisionWorld->lines[collisionWorld->numOfLines] = line;
   collisionWorld->numOfLines++;
+  // recreate the quadtree (this setup is called before the timed portion)
+  Quadtree_delete(collisionWorld->quadtree);
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
 }
 
 Line* CollisionWorld_getLine(CollisionWorld* collisionWorld,
@@ -130,37 +138,10 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 
   // Test all line-line pairs to see if they will intersect before the
   // next time step.
-//   for (int i = 0; i < collisionWorld->numOfLines; i++) {
-//     Line *l1 = collisionWorld->lines[i];
-// 
-//     for (int j = i + 1; j < collisionWorld->numOfLines; j++) {
-//       Line *l2 = collisionWorld->lines[j];
-// 
-//       // intersect expects compareLines(l1, l2) < 0 to be true.
-//       // Swap l1 and l2, if necessary.
-//       if (compareLines(l1, l2) >= 0) {
-//         Line *temp = l1;
-//         l1 = l2;
-//         l2 = temp;
-//       }
-// 
-//       IntersectionType intersectionType =
-//           intersect(l1, l2, collisionWorld->timeStep);
-//       if (intersectionType != NO_INTERSECTION) {
-// //         printf("line1 id: %d\n",l1->id);
-// //         printf("line2 id: %d\n",l2->id);
-//         IntersectionEventList_appendNode(&intersectionEventList, l1, l2,
-//                                          intersectionType);
-//         collisionWorld->numLineLineCollisions++;
-//       }
-//     }
-//   }
 
-  Quadtree* quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  Quadtree_update(collisionWorld->quadtree);
   
-  collisionWorld->numLineLineCollisions += detectCollisions(quadtree, &intersectionEventList);
-  
-  Quadtree_delete(quadtree);
+  collisionWorld->numLineLineCollisions += detectCollisions(collisionWorld->quadtree, &intersectionEventList);
 
   // Sort the intersection event list.
   IntersectionEventNode* startNode = intersectionEventList.head;
@@ -257,8 +238,8 @@ void CollisionWorld_collisionSolver(CollisionWorld* collisionWorld,
   double v2Normal = Vec_dotProduct(l2->velocity, normal);
 
   // Compute the mass of each line (we simply use its length).
-  double m1 = Vec_length(Vec_subtract(l1->p1, l1->p2));
-  double m2 = Vec_length(Vec_subtract(l2->p1, l2->p2));
+  double m1 = l1->length;
+  double m2 = l2->length;
 
   // Perform the collision calculation (computes the new velocities along
   // the direction normal to the collision face such that momentum and

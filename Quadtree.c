@@ -39,9 +39,8 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
 }
 
 void Quadtree_delete(Quadtree* quadtree){
-  if (quadtree->isLeaf){
-     free(quadtree->lines);
-  } else {
+  free(quadtree->lines);
+  if (!(quadtree->isLeaf)){
     for (int i = 0; i < 4; i++) {
       Quadtree_delete(quadtree->quadrants[i]);
     }
@@ -50,7 +49,36 @@ void Quadtree_delete(Quadtree* quadtree){
   free(quadtree);
 }
 
+bool Quadtree_update(Quadtree* quadtree){
+  bool shouldDestroy = false;
+  if (quadtree->isLeaf){
+    shouldDestroy = shouldDivideTree(quadtree);
+  }
+  else {
+    // add the collisions for all of the leaves of this quadtree
+    unsigned int numLinesUnder = 0;
+    for (int i = 0; i < 4; i++) {
+       shouldDestroy = Quadtree_update(quadtree->quadrants[i]);
+       if (shouldDestroy) {
+         Vec upperLeft = quadtree->quadrants[i]->upperLeft;
+         Vec lowerRight = quadtree->quadrants[i]->lowerRight;
+         Quadtree_delete(quadtree->quadrants[i]);
+         quadtree->quadrants[i] = Quadtree_new(quadtree->collisionWorld, 
+           upperLeft, 
+           lowerRight);
+       }
+       numLinesUnder += getNumLinesUnder(quadtree->quadrants[i]);
+    }
+    if (numLinesUnder <= MAX_LINES_PER_NODE) {
+      shouldDestroy = true;
+    }
+  }
+  return shouldDestroy;
+
+}
+
 bool shouldDivideTree(Quadtree* quadtree){
+  quadtree->numOfLines = 0;
   for (int i = 0; i < quadtree->collisionWorld->numOfLines; i++){
     Line* line = quadtree->collisionWorld->lines[i];
     
@@ -81,6 +109,16 @@ void divideTree(Quadtree* quadtree){
     quadtree->lowerRight);
 }
 
+unsigned int getNumLinesUnder(Quadtree* quadtree){
+  unsigned int numLinesUnder = 0;
+  if (quadtree->isLeaf) {
+    return quadtree->numOfLines;
+  }
+  for (int i = 0; i < 4; i++) {
+    numLinesUnder += getNumLinesUnder(quadtree->quadrants[i]);
+  }
+  return numLinesUnder;
+}
 bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
@@ -133,16 +171,16 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   }
   
   //also check all the lines in the case that no points are inside the other shape
-  if (fastIntersectLines(box_p1, box_p2, line_p1, line_p2)){
+  if (intersectLines(box_p1, box_p2, line_p1, line_p2)){
     return true;
   }
-  if (fastIntersectLines(box_p1, box_p3, line_p1, line_p2)){
+  if (intersectLines(box_p1, box_p3, line_p1, line_p2)){
     return true;
   }
-  if (fastIntersectLines(box_p2, box_p4, line_p1, line_p2)){
+  if (intersectLines(box_p2, box_p4, line_p1, line_p2)){
     return true;
   }
-  if (fastIntersectLines(box_p3, box_p4, line_p1, line_p2)){
+  if (intersectLines(box_p3, box_p4, line_p1, line_p2)){
     return true;
   }
   
@@ -172,18 +210,18 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line){
 //     return true;
 //   }
   
-  if (intersectLines(box_p1, box_p2, line_p3, line_p4)){
-    return true;
-  }
-  if (intersectLines(box_p1, box_p3, line_p3, line_p4)){
-    return true;
-  }
-  if (intersectLines(box_p2, box_p4, line_p3, line_p4)){
-    return true;
-  }
-  if (intersectLines(box_p3, box_p4, line_p3, line_p4)){
-    return true;
-  }
+  // if (intersectLines(box_p1, box_p2, line_p3, line_p4)){
+  //   return true;
+  // }
+  // if (intersectLines(box_p1, box_p3, line_p3, line_p4)){
+  //   return true;
+  // }
+  // if (intersectLines(box_p2, box_p4, line_p3, line_p4)){
+  //   return true;
+  // }
+  // if (intersectLines(box_p3, box_p4, line_p3, line_p4)){
+  //   return true;
+  // }
   return false;
 }
 
@@ -211,9 +249,6 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
           
           
           IntersectionEventNode* newNode = malloc(sizeof(IntersectionEventNode));
-          if (newNode == NULL) {
-            return;
-          }
           newNode->l1 = l1;
           newNode->l2 = l2;
           
