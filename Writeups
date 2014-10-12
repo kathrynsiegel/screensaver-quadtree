@@ -35,3 +35,8 @@ collisions up, which was not worth the small decrease in the O(N^2) base case.
 polygon. Results:...
 
 We also tried precomputing the length of each line. This did not result in a significant speedup.
+
+We then made the Quadtree a parameter of the CollisionWorld. This allowed us to update the 
+Quadtree at each timestep rather than recreating it, and this led to a 5% speedup.
+
+8.
