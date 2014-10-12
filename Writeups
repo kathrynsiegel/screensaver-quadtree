@@ -39,4 +39,18 @@ We also tried precomputing the length of each line. This did not result in a sig
 We then made the Quadtree a parameter of the CollisionWorld. This allowed us to update the 
 Quadtree at each timestep rather than recreating it, and this led to a 5% speedup.
 
+We also added a preliminary check to our function that checks if we need to include a line in the quadtree.
+This check sees if all of the points of the parallelogram form by the line are off to any side of the box
+to quickly exclude it. This reduces the number of times we need to calculate pointInParallelogram and
+intersectLines, and led to a 30% speedup.
+
 8.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  ms/call  ms/call  name
+ 25.00      0.80     0.80 46415185     0.00     0.00  fastIntersect
+ 21.57      1.49     0.69 143021580     0.00     0.00  Vec_multiply
+ 20.32      2.14     0.65 143020897     0.00     0.00  Vec_add
+ 10.63      2.48     0.34     1001     0.34     2.18  detectCollisions
+  6.88      2.70     0.22    13565     0.02     0.03  shouldDivideTree
+  5.31      2.87     0.17 46418439     0.00     0.00  Vec_subtract
+
