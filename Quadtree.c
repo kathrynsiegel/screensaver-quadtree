@@ -130,11 +130,9 @@ inline bool addLine(Quadtree* quadtree, Line* line){
 }
 
 inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
-  // make the bounding box of the quadtree
+  // make the half of the bounding box of the quadtree
   Vec box_p1 = quadtree->upperLeft;
   Vec box_p4 = quadtree->lowerRight;
-  Vec box_p3 = Vec_make(box_p1.x, box_p4.y);
-  Vec box_p2 = Vec_make(box_p4.x, box_p1.y);
   
   // make the parallelogram formed by the moving line
   Vec line_p1 = line->p1;
@@ -143,18 +141,22 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   Vec line_p4 = Vec_add(line_p2, Vec_multiply(line->velocity, quadtree->collisionWorld->timeStep));
   
   // perform a preliminary check if all of the parallelogram points are off to a side of the box
-//   if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
-//     return false;
-//   }
-//   if (line_p1.y > box_p1.y && line_p2.y > box_p1.y && line_p3.y > box_p1.y && line_p4.x > box_p1.y){
-//     return false;
-//   }
-//   if (line_p1.y < box_p4.y && line_p2.y < box_p4.y && line_p3.y < box_p4.y && line_p4.y < box_p4.y){
-//     return false;
-//   }
-//   if (line_p1.x < box_p1.x && line_p2.x < box_p1.x && line_p3.x < box_p1.x && line_p4.x < box_p1.x){
-//     return false;
-//   }
+  if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
+    return false;
+  }
+  if (line_p1.y < box_p1.y && line_p2.y < box_p1.y && line_p3.y < box_p1.y && line_p4.x < box_p1.y){
+    return false;
+  }
+  if (line_p1.y > box_p4.y && line_p2.y > box_p4.y && line_p3.y > box_p4.y && line_p4.y > box_p4.y){
+    return false;
+  }
+  if (line_p1.x < box_p1.x && line_p2.x < box_p1.x && line_p3.x < box_p1.x && line_p4.x < box_p1.x){
+    return false;
+  }
+  
+  // finish the bounding box once we know we need to check all corners
+  Vec box_p3 = Vec_make(box_p1.x, box_p4.y);
+  Vec box_p2 = Vec_make(box_p4.x, box_p1.y);
   
   // check each of the points in the parallelogram 
   // and each of the points in the bounding box
@@ -211,7 +213,7 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   if (intersectLines(box_p3, box_p4, line_p1, line_p3)){
     return true;
   }
-  
+
 //   if (intersectLines(box_p1, box_p2, line_p2, line_p4)){
 //     return true;
 //   }
@@ -225,18 +227,19 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
 //     return true;
 //   }
   
-  // if (intersectLines(box_p1, box_p2, line_p3, line_p4)){
-  //   return true;
-  // }
-  // if (intersectLines(box_p1, box_p3, line_p3, line_p4)){
-  //   return true;
-  // }
-  // if (intersectLines(box_p2, box_p4, line_p3, line_p4)){
-  //   return true;
-  // }
-  // if (intersectLines(box_p3, box_p4, line_p3, line_p4)){
-  //   return true;
-  // }
+//   if (intersectLines(box_p1, box_p2, line_p3, line_p4)){
+//     return true;
+//   }
+//   if (intersectLines(box_p1, box_p3, line_p3, line_p4)){
+//     return true;
+//   }
+//   if (intersectLines(box_p2, box_p4, line_p3, line_p4)){
+//     return true;
+//   }
+//   if (intersectLines(box_p3, box_p4, line_p3, line_p4)){
+//     return true;
+//   }
+
   return false;
 }
 
