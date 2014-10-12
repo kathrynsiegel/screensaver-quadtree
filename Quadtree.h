@@ -13,8 +13,11 @@
 
 #define MAX_LINES_PER_NODE 160
 
+// need to forward reference due to circularity of these structs
+typedef struct CollisionWorld CollisionWorld;
 typedef struct Quadtree Quadtree;
-struct Quadtree {
+
+typedef struct Quadtree {
 
   // The CollisionWorld the Quadtree exists in
   CollisionWorld* collisionWorld;
@@ -35,8 +38,9 @@ struct Quadtree {
   
   // True if the Quadtree contains less than MAX_LINES_PER_NODE lines
   bool isLeaf;
-  
-};
+} Quadtree_t;
+
+
 
 Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight);
 
