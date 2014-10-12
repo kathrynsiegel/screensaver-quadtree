@@ -23,9 +23,16 @@
 #include "IntersectionDetection.h"
 
 #include <assert.h>
+#include <stdio.h>
+#include <math.h>
+#include <float.h>
 
 #include "Line.h"
 #include "Vec.h"
+
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define ABS(a) ((a>0)?(a):(-1*a))
 
 // Detect if lines l1 and l2 will intersect between now and the next time step.
 IntersectionType intersect(Line *l1, Line *l2, double time) {
@@ -48,17 +55,17 @@ IntersectionType intersect(Line *l1, Line *l2, double time) {
   bool top_intersected = false;
   bool bottom_intersected = false;
 
-  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
+  if (fastIntersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
     return ALREADY_INTERSECTED;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
+  if (fastIntersectLines(l1->p1, l1->p2, p1, p2)) {
     num_line_intersections++;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
+  if (fastIntersectLines(l1->p1, l1->p2, p1, l2->p1)) {
     num_line_intersections++;
     top_intersected = true;
   }
-  if (intersectLines(l1->p1, l1->p2, p2, l2->p2)) {
+  if (fastIntersectLines(l1->p1, l1->p2, p2, l2->p2)) {
     num_line_intersections++;
     bottom_intersected = true;
   }
@@ -138,6 +145,32 @@ bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
     return true;
   }
   return false;
+}
+
+bool fastIntersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
+  if (ABS(p2.x-p1.x) <= .00001 || ABS(p4.x-p3.x) <= .00001) {
+    return intersectLines(p1,p2,p3,p4);
+  } else {
+    double l1slope = (p2.y-p1.y)/(p2.x-p1.x);
+    double l2slope = (p4.y-p3.y)/(p4.x-p3.x);
+    if (l1slope-l2slope == 0.0) {
+      return intersectLines(p1,p2,p3,p4);
+    }
+    double l1intercept = p1.y-(l1slope*p1.x);
+    double l2intercept = p3.y-(l2slope*p3.x);
+    
+    // find where they intersect if normal lines
+    double xintersect = (l2intercept-l1intercept)/(l1slope-l2slope);
+    // find if this point exists on both line segments
+    if (xintersect < MIN(p1.x,p2.x) || xintersect < MIN(p3.x,p4.x) ||
+        xintersect > MAX(p1.x,p2.x) || xintersect > MAX(p3.x,p4.x)) {
+      return false;
+    } else if (ABS(xintersect-p1.x) < 0.0001 || ABS(xintersect-p2.x) < 0.0001 ||
+        ABS(xintersect-p3.x) < 0.0001 || ABS(xintersect-p4.x) < 0.0001) {
+      return intersectLines(p1,p2,p3,p4);
+    }
+    return true;
+  }
 }
 
 // Obtain the intersection point for two intersecting line segments.

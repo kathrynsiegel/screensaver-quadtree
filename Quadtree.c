@@ -133,16 +133,16 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   }
   
   //also check all the lines in the case that no points are inside the other shape
-  if (intersectLines(box_p1, box_p2, line_p1, line_p2)){
+  if (fastIntersectLines(box_p1, box_p2, line_p1, line_p2)){
     return true;
   }
-  if (intersectLines(box_p1, box_p3, line_p1, line_p2)){
+  if (fastIntersectLines(box_p1, box_p3, line_p1, line_p2)){
     return true;
   }
-  if (intersectLines(box_p2, box_p4, line_p1, line_p2)){
+  if (fastIntersectLines(box_p2, box_p4, line_p1, line_p2)){
     return true;
   }
-  if (intersectLines(box_p3, box_p4, line_p1, line_p2)){
+  if (fastIntersectLines(box_p3, box_p4, line_p1, line_p2)){
     return true;
   }
   
