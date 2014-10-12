@@ -141,24 +141,38 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 
   Quadtree_update(collisionWorld->quadtree);
   
-  collisionWorld->numLineLineCollisions += detectCollisions(collisionWorld->quadtree, &intersectionEventList);
+  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
 
   // Sort the intersection event list.
   IntersectionEventNode* startNode = intersectionEventList.head;
   while (startNode != NULL) {
     IntersectionEventNode* minNode = startNode;
     IntersectionEventNode* curNode = startNode->next;
+    IntersectionEventNode* prevNode = startNode;
+    IntersectionEventNode* delNode;
     while (curNode != NULL) {
-      if (IntersectionEventNode_compareData(curNode, minNode) < 0) {
-        minNode = curNode;
+      int comp = IntersectionEventNode_compareData(curNode, minNode);
+      if (comp == 0) {
+        delNode = curNode;
+        curNode = curNode->next;
+        prevNode->next = curNode;
+        free(delNode);
+        numCollisions--;
+      } else {
+        if (comp < 0) {
+          minNode = curNode;
+        }
+        prevNode = curNode;
+        curNode = curNode->next;
       }
-      curNode = curNode->next;
     }
     if (minNode != startNode) {
       IntersectionEventNode_swapData(minNode, startNode);
     }
     startNode = startNode->next;
   }
+
+  collisionWorld->numLineLineCollisions += numCollisions;
 
   // Call the collision solver for each intersection event.
   IntersectionEventNode* curNode = intersectionEventList.head;
