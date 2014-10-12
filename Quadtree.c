@@ -225,6 +225,11 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   return false;
 }
 
+// Bentley Ottman
+// inline unsigned int fastDetectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
+
+// }
+
 inline unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
   unsigned int numLineLineCollisions = 0;
   if (quadtree->isLeaf){
@@ -243,9 +248,9 @@ inline unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* 
           l2 = temp;
         }
 
-        IntersectionType intersectionType =
-            intersect(l1, l2, quadtree->collisionWorld->timeStep);
-        if (intersectionType != NO_INTERSECTION) {
+        // IntersectionType intersectionType =
+        //     intersect(l1, l2, quadtree->collisionWorld->timeStep);
+        if (fastIntersect(l1, l2, quadtree->collisionWorld->timeStep)) {
           
           
           IntersectionEventNode* newNode = malloc(sizeof(IntersectionEventNode));
@@ -270,7 +275,7 @@ inline unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* 
           
           if (!alreadyAdded){
             IntersectionEventList_appendNode(intersectionEventList, l1, l2,
-                                    intersectionType);
+                                    intersect(l1, l2, quadtree->collisionWorld->timeStep));
             numLineLineCollisions++;
           }
           
