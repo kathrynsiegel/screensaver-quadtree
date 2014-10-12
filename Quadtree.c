@@ -30,16 +30,11 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));
   
   quadtree->isLeaf = !shouldDivideTree(quadtree);
-  if (quadtree->isLeaf){
-    
-    //findLines(quadtree);
-  } 
-  else {
+  if (!(quadtree->isLeaf)){
     quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
     divideTree(quadtree);
-    //printf("Done dividing\n");
   }
-  //printf("%d\n", quadtree->numOfLines);
+  
   return quadtree;
 }
 
@@ -60,12 +55,8 @@ bool shouldDivideTree(Quadtree* quadtree){
     Line* line = quadtree->collisionWorld->lines[i];
     
     if (isLineInQuadtree(quadtree, line)){
-      //printf("here");
-      // printf("p1 x: %f y:%f\n",line->p1.x,line->p1.y);
-//       printf("p2 x: %f y:%f\n",line->p2.x,line->p2.y);
-//       printf("upperLeft x:%f y:%f\n",quadtree->upperLeft.x, quadtree->upperLeft.y);
-//       printf("lowerRight x:%f y:%f\n",quadtree->lowerRight.x, quadtree->lowerRight.y);
       if (!addLine(quadtree, line)){
+        // if the line did not add, then there are too many lines, so divide the quadtree 
         return true;
       }
     }
@@ -74,11 +65,8 @@ bool shouldDivideTree(Quadtree* quadtree){
 }
 
 void divideTree(Quadtree* quadtree){
-  //printf("Dividing tree\n");
+  // break the tree up into 4 quadrants
   Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);;
-  //printf("upperLeft x:%f y:%f\n",quadtree->upperLeft.x, quadtree->upperLeft.y);
-  //printf("lowerRight x:%f y:%f\n",quadtree->lowerRight.x, quadtree->lowerRight.y);
-  //printf("centerPoint x:%f y:%f\n",centerPoint.x, centerPoint.y);
   quadtree->quadrants[0] = Quadtree_new(quadtree->collisionWorld, 
     quadtree->upperLeft, 
     centerPoint);
@@ -93,8 +81,6 @@ void divideTree(Quadtree* quadtree){
     quadtree->lowerRight);
 }
 
-void findLines(Quadtree* quadtree){}
-
 bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
@@ -108,8 +94,8 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   // make the bounding box of the quadtree
   Vec box_p1 = quadtree->upperLeft;
   Vec box_p4 = quadtree->lowerRight;
-  Vec box_p2 = Vec_make(box_p1.x, box_p4.y);
-  Vec box_p3 = Vec_make(box_p4.x, box_p1.y);
+  Vec box_p3 = Vec_make(box_p1.x, box_p4.y);
+  Vec box_p2 = Vec_make(box_p4.x, box_p1.y);
   
   // make the parallelogram formed by the moving line
   Vec line_p1 = line->p1;
@@ -144,6 +130,59 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   if (pointInParallelogram(box_p4, line_p1, line_p2, line_p3, line_p4)) {
     return true;
   }
+  
+  //also check all the lines in the case that no points are inside the other shape
+  if (intersectLines(box_p1, box_p2, line_p1, line_p2)){
+    return true;
+  }
+  if (intersectLines(box_p1, box_p3, line_p1, line_p2)){
+    return true;
+  }
+  if (intersectLines(box_p2, box_p4, line_p1, line_p2)){
+    return true;
+  }
+  if (intersectLines(box_p3, box_p4, line_p1, line_p2)){
+    return true;
+  }
+  
+  if (intersectLines(box_p1, box_p2, line_p1, line_p3)){
+    return true;
+  }
+  if (intersectLines(box_p1, box_p3, line_p1, line_p3)){
+    return true;
+  }
+  if (intersectLines(box_p2, box_p4, line_p1, line_p3)){
+    return true;
+  }
+  if (intersectLines(box_p3, box_p4, line_p1, line_p3)){
+    return true;
+  }
+  
+  if (intersectLines(box_p1, box_p2, line_p2, line_p4)){
+    return true;
+  }
+  if (intersectLines(box_p1, box_p3, line_p2, line_p4)){
+    return true;
+  }
+  if (intersectLines(box_p2, box_p4, line_p2, line_p4)){
+    return true;
+  }
+  if (intersectLines(box_p3, box_p4, line_p2, line_p4)){
+    return true;
+  }
+  
+  if (intersectLines(box_p1, box_p2, line_p3, line_p4)){
+    return true;
+  }
+  if (intersectLines(box_p1, box_p3, line_p3, line_p4)){
+    return true;
+  }
+  if (intersectLines(box_p2, box_p4, line_p3, line_p4)){
+    return true;
+  }
+  if (intersectLines(box_p3, box_p4, line_p3, line_p4)){
+    return true;
+  }
   return false;
 }
 
@@ -168,9 +207,37 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
         IntersectionType intersectionType =
             intersect(l1, l2, quadtree->collisionWorld->timeStep);
         if (intersectionType != NO_INTERSECTION) {
-          IntersectionEventList_appendNode(intersectionEventList, l1, l2,
-                                           intersectionType);
-          numLineLineCollisions++;
+          
+          
+          IntersectionEventNode* newNode = malloc(sizeof(IntersectionEventNode));
+          if (newNode == NULL) {
+            return;
+          }
+          newNode->l1 = l1;
+          newNode->l2 = l2;
+          
+          // check to make sure this collision has not been added already
+          
+          bool alreadyAdded = false;
+          IntersectionEventNode* curNode = intersectionEventList->head;
+          IntersectionEventNode* nextNode = NULL;
+          
+          while (curNode != NULL) {
+            nextNode = curNode->next;
+            if (IntersectionEventNode_compareData(newNode, curNode) == 0){
+              alreadyAdded=true;
+            }
+            curNode = nextNode;
+          }
+          
+          free(newNode);
+          
+          if (!alreadyAdded){
+            IntersectionEventList_appendNode(intersectionEventList, l1, l2,
+                                    intersectionType);
+            numLineLineCollisions++;
+          }
+          
         }
       }
     }
