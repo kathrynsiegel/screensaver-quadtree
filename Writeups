@@ -32,4 +32,6 @@ for 4000 frames. We concluded this was due the to overhead of recursing too deep
 collisions up, which was not worth the small decrease in the O(N^2) base case.
 
 7. Our first optimization was to try rewriting a method for calculating when a line intersects a
-polygon.
+polygon. Results:...
+
+We also tried precomputing the length of each line. This did not result in a significant speedup.

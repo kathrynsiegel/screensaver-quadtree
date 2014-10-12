@@ -26,6 +26,7 @@ struct Quadtree {
   Vec lowerRight;
 
   // Array containing all of the lines that are part of this level of the Quadtree
+  // This array is only comprehensive if the node is a leaf
   Line** lines;
   unsigned int numOfLines;
 
@@ -41,11 +42,16 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
 
 void Quadtree_delete(Quadtree* quadtree);
 
+bool Quadtree_update(Quadtree* quadtree);
+
 // Returns true if this tree needs to divide itself into quadrants
+// and adds all lines in this quadtree
 bool shouldDivideTree(Quadtree* quadtree);
 
 // Instantiates and fills the four quadrants of the tree
 void divideTree(Quadtree* quadtree);
+
+unsigned int getNumLinesUnder(Quadtree* quadtree);
 
 // Finds all of the lines that should belong to this quadtree level and adds them
 void findLines(Quadtree* quadtree);
