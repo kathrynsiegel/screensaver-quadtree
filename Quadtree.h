@@ -11,6 +11,8 @@
 #include "Vec.h"
 #include "IntersectionEventList.h"
 
+#include <cilk/reducer_opadd.h>
+
 #define MAX_LINES_PER_NODE 160
 
 // need to forward reference due to circularity of these structs
@@ -70,6 +72,6 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line);
 // and returns the number of collisions
 unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList);
 
-unsigned int detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* intersectionEventList);
+void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* intersectionEventList, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisions);
 
 #endif  // QUADTREE_H_

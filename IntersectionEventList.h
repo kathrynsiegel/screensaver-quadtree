@@ -65,6 +65,10 @@ void IntersectionEventList_appendNode(
     IntersectionEventList* intersectionEventList, Line* l1, Line* l2,
     IntersectionType intersectionType);
 
+// Appends all of the nodes in the other list to an intersection event list.
+void IntersectionEventList_appendEventList(IntersectionEventList* intersectionEventList,
+    IntersectionEventList* otherList);
+
 // Deletes all the nodes in the list.
 void IntersectionEventList_deleteNodes(
     IntersectionEventList* intersectionEventList);

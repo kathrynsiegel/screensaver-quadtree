@@ -54,3 +54,16 @@ intersectLines, and led to a 30% speedup.
   6.88      2.70     0.22    13565     0.02     0.03  shouldDivideTree
   5.31      2.87     0.17 46418439     0.00     0.00  Vec_subtract
 
+9. We made a reducer for the intersectionEventList and also used an OpAdd reducer to track 
+the number of collisions. To account for duplicate events being added to the reducer, we
+modified the event list sort to remove any duplicates it finds while sorting.
+
+jlmart88@desflurane:~/project2$ cilkscreen ./Screensaver 100
+Cilkscreen Race Detector V2.0.0, Build 3566
+Number of frames = 100
+---- RESULTS ----
+Elapsed execution time: 20.491324s
+0 Line-Wall Collisions
+0 Line-Line Collisions
+---- END RESULTS ----
+No errors found by Cilkscreen

@@ -34,6 +34,7 @@
 #include "Quadtree.h"
 
 #include <cilk/reducer.h>
+#include <cilk/reducer_opadd.h>
 
 CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   assert(capacity > 0);
@@ -140,7 +141,7 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 //  IntersectionEventList intersectionEventList = IntersectionEventList_make();
 //  Quadtree_update(collisionWorld->quadtree);
 //   
-//  collisionWorld->numLineLineCollisions += detectCollisions(collisionWorld->quadtree, &intersectionEventList);
+//  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
   
   IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
   intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
@@ -150,7 +151,15 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
   
   Quadtree_update(collisionWorld->quadtree);
   
-  collisionWorld->numLineLineCollisions += detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer);
+  CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
+  CILK_C_REGISTER_REDUCER(numCollisionsReducer);
+  
+  detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer, &numCollisionsReducer);
+  
+  int numCollisions = REDUCER_VIEW(numCollisionsReducer);
+  
+  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
+  
   
   IntersectionEventList intersectionEventList = REDUCER_VIEW(intersectionEventListReducer);
   
@@ -159,17 +168,31 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
   while (startNode != NULL) {
     IntersectionEventNode* minNode = startNode;
     IntersectionEventNode* curNode = startNode->next;
+    IntersectionEventNode* prevNode = startNode;
+    IntersectionEventNode* delNode;
     while (curNode != NULL) {
-      if (IntersectionEventNode_compareData(curNode, minNode) < 0) {
-        minNode = curNode;
+      int comp = IntersectionEventNode_compareData(curNode, minNode);
+      if (comp == 0) {
+        delNode = curNode;
+        curNode = curNode->next;
+        prevNode->next = curNode;
+        free(delNode);
+        numCollisions--;
+      } else {
+        if (comp < 0) {
+          minNode = curNode;
+        }
+        prevNode = curNode;
+        curNode = curNode->next;
       }
-      curNode = curNode->next;
     }
     if (minNode != startNode) {
       IntersectionEventNode_swapData(minNode, startNode);
     }
     startNode = startNode->next;
   }
+
+  collisionWorld->numLineLineCollisions += numCollisions;
 
   // Call the collision solver for each intersection event.
   IntersectionEventNode* curNode = intersectionEventList.head;
