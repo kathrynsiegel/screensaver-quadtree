@@ -111,22 +111,6 @@ inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
   return false;
 }
 
-// inline bool fastPointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
-//   // (pk.x - pi.x) * (pj.y - pi.y) - (pj.x - pi.x) * (pk.y - pi.y)
-//   double pointp1diffx = point.x - p1.x;
-//   double pointp1diffy = point.y - p1.y;
-//   double d1 = pointp1diffx * (p2.y - p1.y) - (p2.x - p1.x) * pointp1diffy;
-//   double d2 = (point.x - p3.x) * (p4.y - p3.y) - (p4.x - p3.x) * (point.y - p3.y);
-//   double d3 = direction(p1, p3, point);
-//   double d4 = direction(p2, p4, point);
-
-//   if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
-//       && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-//     return true;
-//   }
-//   return false;
-// }
-
 // Check if two lines intersect.
 inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
   // Relative orientation

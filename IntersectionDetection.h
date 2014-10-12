@@ -40,8 +40,6 @@ IntersectionType intersect(Line *l1, Line *l2, double time);
 // Check if a point is in the parallelogram.
 bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4);
 
-// bool fastPointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4);
-
 // Check if two lines intersect.
 bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4);
 
