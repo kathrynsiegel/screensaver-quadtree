@@ -33,6 +33,8 @@
 #include "Line.h"
 #include "Quadtree.h"
 
+#include <cilk/reducer.h>
+
 CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   assert(capacity > 0);
 
@@ -134,15 +136,24 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
-  IntersectionEventList intersectionEventList = IntersectionEventList_make();
+  
+//  IntersectionEventList intersectionEventList = IntersectionEventList_make();
+//  Quadtree_update(collisionWorld->quadtree);
+//   
+//  collisionWorld->numLineLineCollisions += detectCollisions(collisionWorld->quadtree, &intersectionEventList);
+  
+  IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
+  intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
+  /* initial value */ (IntersectionEventList) { .head = NULL, .tail = NULL });
 
-  // Test all line-line pairs to see if they will intersect before the
-  // next time step.
-
+  CILK_C_REGISTER_REDUCER(intersectionEventListReducer);
+  
   Quadtree_update(collisionWorld->quadtree);
   
-  collisionWorld->numLineLineCollisions += detectCollisions(collisionWorld->quadtree, &intersectionEventList);
-
+  collisionWorld->numLineLineCollisions += detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer);
+  
+  IntersectionEventList intersectionEventList = REDUCER_VIEW(intersectionEventListReducer);
+  
   // Sort the intersection event list.
   IntersectionEventNode* startNode = intersectionEventList.head;
   while (startNode != NULL) {
@@ -169,7 +180,9 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
     curNode = curNode->next;
   }
 
-  IntersectionEventList_deleteNodes(&intersectionEventList);
+  //IntersectionEventList_deleteNodes(&intersectionEventList);
+  
+  CILK_C_UNREGISTER_REDUCER(intersectionEventListReducer);
 }
 
 unsigned int CollisionWorld_getNumLineWallCollisions(

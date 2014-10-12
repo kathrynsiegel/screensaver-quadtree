@@ -70,4 +70,6 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line);
 // and returns the number of collisions
 unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList);
 
+unsigned int detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* intersectionEventList);
+
 #endif  // QUADTREE_H_

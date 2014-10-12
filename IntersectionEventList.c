@@ -24,6 +24,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <cilk/reducer.h>
 
 int IntersectionEventNode_compareData(IntersectionEventNode* node1,
                                       IntersectionEventNode* node2) {
@@ -102,3 +103,34 @@ void IntersectionEventList_deleteNodes(
   intersectionEventList->head = NULL;
   intersectionEventList->tail = NULL;
 }
+
+void merge_lists(IntersectionEventList* list1, IntersectionEventList* list2) {
+  if (list2->head != NULL){
+    if (list1->head == NULL) {
+      list1->head = list2->head;
+    }
+    else {
+      list1->tail->next = list2->head;
+    }
+    list1->tail = list2->tail;
+    list2->head = NULL;
+    list2->tail = NULL;
+  }
+}
+
+// Evaluates *left = *left OPERATOR *right.
+void intersection_event_list_reduce(void* key, void* left, void* right){
+  merge_lists((IntersectionEventList *)left,(IntersectionEventList *)right);
+};
+
+// Sets *value to the the identity value.
+void intersection_event_list_identity(void* key, void* value){
+  IntersectionEventList *old_list = (IntersectionEventList *)value;
+  old_list->head = NULL;
+  old_list->tail = NULL;
+};
+
+// Destroys any dynamically allocated memory. Hint: delete_nodes.
+void intersection_event_list_destroy(void* key, void* value){
+  IntersectionEventList_deleteNodes((IntersectionEventList *)value);
+};
