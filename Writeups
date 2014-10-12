@@ -5,7 +5,7 @@ Elapsed execution time: 107.164359s
 19806 Line-Line Collisions
 ---- END RESULTS ----
 
-2. This is not a problem from the quad tree. This line will exist at the top level of the quad tree, and can be passed into each of the leaves when detecting collisions in those leaves. This will still effectively speed up the collision detection.
+2. This is not a problem for the quad tree. This line will exist at the top level of the quad tree, and can be passed into each of the leaves when detecting collisions in those leaves. This will still effectively speed up the collision detection.
 
 3. Number of frames = 4000
 ---- RESULTS ----
@@ -13,3 +13,23 @@ Elapsed execution time: 25.596644s
 1262 Line-Wall Collisions
 19806 Line-Line Collisions
 ---- END RESULTS ----
+
+4. We got a >4x speed-up, which is larger than we expected.
+
+5. We built a quadtree which only stores lines in its leaves. We also considered the lines 
+as parallelograms when placing them into quadtree nodes. To detect the collisions, we 
+recursively called our detect collisions function on each of the
+four quadrants in the quadtree, until we hit leaves. Then we iterated through all of the leaves
+in that leaf using the same O(N^2) collision test.
+
+To accomodate for lines which spanned multiple nodes after a quadtree was divided, we placed that
+line in each of the nodes in which it intersected. To avoid repeated collisions being marked,
+we checked to make sure the intersection was not part of the event list before adding the 
+intersection.
+
+6. We tested N = 80, 100, 120, 140, and 160, and found that N=140 gave us the best performance 
+for 4000 frames. We concluded this was due the to overhead of recursing too deeply to divide the
+collisions up, which was not worth the small decrease in the O(N^2) base case.
+
+7. Our first optimization was to try rewriting a method for calculating when a line intersects a
+polygon.

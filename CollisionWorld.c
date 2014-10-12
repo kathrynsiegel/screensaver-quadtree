@@ -130,37 +130,37 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 
   // Test all line-line pairs to see if they will intersect before the
   // next time step.
-  for (int i = 0; i < collisionWorld->numOfLines; i++) {
-    Line *l1 = collisionWorld->lines[i];
+//   for (int i = 0; i < collisionWorld->numOfLines; i++) {
+//     Line *l1 = collisionWorld->lines[i];
+// 
+//     for (int j = i + 1; j < collisionWorld->numOfLines; j++) {
+//       Line *l2 = collisionWorld->lines[j];
+// 
+//       // intersect expects compareLines(l1, l2) < 0 to be true.
+//       // Swap l1 and l2, if necessary.
+//       if (compareLines(l1, l2) >= 0) {
+//         Line *temp = l1;
+//         l1 = l2;
+//         l2 = temp;
+//       }
+// 
+//       IntersectionType intersectionType =
+//           intersect(l1, l2, collisionWorld->timeStep);
+//       if (intersectionType != NO_INTERSECTION) {
+// //         printf("line1 id: %d\n",l1->id);
+// //         printf("line2 id: %d\n",l2->id);
+//         IntersectionEventList_appendNode(&intersectionEventList, l1, l2,
+//                                          intersectionType);
+//         collisionWorld->numLineLineCollisions++;
+//       }
+//     }
+//   }
 
-    for (int j = i + 1; j < collisionWorld->numOfLines; j++) {
-      Line *l2 = collisionWorld->lines[j];
-
-      // intersect expects compareLines(l1, l2) < 0 to be true.
-      // Swap l1 and l2, if necessary.
-      if (compareLines(l1, l2) >= 0) {
-        Line *temp = l1;
-        l1 = l2;
-        l2 = temp;
-      }
-
-      IntersectionType intersectionType =
-          intersect(l1, l2, collisionWorld->timeStep);
-      if (intersectionType != NO_INTERSECTION) {
-//         printf("line1 id: %d\n",l1->id);
-//         printf("line2 id: %d\n",l2->id);
-        IntersectionEventList_appendNode(&intersectionEventList, l1, l2,
-                                         intersectionType);
-        collisionWorld->numLineLineCollisions++;
-      }
-    }
-  }
-
-//   Quadtree* quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
-//   
-//   collisionWorld->numLineLineCollisions += detectCollisions(quadtree, &intersectionEventList);
-//   
-//   Quadtree_delete(quadtree);
+  Quadtree* quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  
+  collisionWorld->numLineLineCollisions += detectCollisions(quadtree, &intersectionEventList);
+  
+  Quadtree_delete(quadtree);
 
   // Sort the intersection event list.
   IntersectionEventNode* startNode = intersectionEventList.head;
