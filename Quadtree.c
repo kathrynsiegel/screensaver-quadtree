@@ -184,18 +184,18 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
     return true;
   }
   
-  // if (intersectLines(box_p1, box_p2, line_p1, line_p3)){
-//     return true;
-//   }
-//   if (intersectLines(box_p1, box_p3, line_p1, line_p3)){
-//     return true;
-//   }
-//   if (intersectLines(box_p2, box_p4, line_p1, line_p3)){
-//     return true;
-//   }
-//   if (intersectLines(box_p3, box_p4, line_p1, line_p3)){
-//     return true;
-//   }
+  if (intersectLines(box_p1, box_p2, line_p1, line_p3)){
+    return true;
+  }
+  if (intersectLines(box_p1, box_p3, line_p1, line_p3)){
+    return true;
+  }
+  if (intersectLines(box_p2, box_p4, line_p1, line_p3)){
+    return true;
+  }
+  if (intersectLines(box_p3, box_p4, line_p1, line_p3)){
+    return true;
+  }
   
 //   if (intersectLines(box_p1, box_p2, line_p2, line_p4)){
 //     return true;
