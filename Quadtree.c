@@ -15,7 +15,7 @@
 #include "IntersectionEventList.h"
 #include "IntersectionDetection.h"
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight) {
+inline Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
   if (quadtree == NULL) {
     return NULL;
@@ -38,7 +38,7 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   return quadtree;
 }
 
-void Quadtree_delete(Quadtree* quadtree){
+inline void Quadtree_delete(Quadtree* quadtree){
   free(quadtree->lines);
   if (!(quadtree->isLeaf)){
     for (int i = 0; i < 4; i++) {
@@ -49,7 +49,7 @@ void Quadtree_delete(Quadtree* quadtree){
   free(quadtree);
 }
 
-bool Quadtree_update(Quadtree* quadtree){
+inline bool Quadtree_update(Quadtree* quadtree){
   bool shouldDestroy = false;
   if (quadtree->isLeaf){
     shouldDestroy = shouldDivideTree(quadtree);
@@ -77,7 +77,7 @@ bool Quadtree_update(Quadtree* quadtree){
 
 }
 
-bool shouldDivideTree(Quadtree* quadtree){
+inline bool shouldDivideTree(Quadtree* quadtree){
   quadtree->numOfLines = 0;
   for (int i = 0; i < quadtree->collisionWorld->numOfLines; i++){
     Line* line = quadtree->collisionWorld->lines[i];
@@ -92,7 +92,7 @@ bool shouldDivideTree(Quadtree* quadtree){
   return false;
 }
 
-void divideTree(Quadtree* quadtree){
+inline void divideTree(Quadtree* quadtree){
   // break the tree up into 4 quadrants
   Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);;
   quadtree->quadrants[0] = Quadtree_new(quadtree->collisionWorld, 
@@ -109,7 +109,7 @@ void divideTree(Quadtree* quadtree){
     quadtree->lowerRight);
 }
 
-unsigned int getNumLinesUnder(Quadtree* quadtree){
+inline unsigned int getNumLinesUnder(Quadtree* quadtree){
   unsigned int numLinesUnder = 0;
   if (quadtree->isLeaf) {
     return quadtree->numOfLines;
@@ -120,7 +120,7 @@ unsigned int getNumLinesUnder(Quadtree* quadtree){
   return numLinesUnder;
 }
 
-bool addLine(Quadtree* quadtree, Line* line){
+inline bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
     return false;
@@ -129,7 +129,7 @@ bool addLine(Quadtree* quadtree, Line* line){
   return true;
 }
 
-bool isLineInQuadtree(Quadtree* quadtree, Line* line){
+inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   // make the bounding box of the quadtree
   Vec box_p1 = quadtree->upperLeft;
   Vec box_p4 = quadtree->lowerRight;
@@ -240,7 +240,12 @@ bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   return false;
 }
 
-unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
+// Bentley Ottman
+// inline unsigned int fastDetectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
+
+// }
+
+inline unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
   unsigned int numLineLineCollisions = 0;
   if (quadtree->isLeaf){
     // iterate through all lines in the quadtree and detect collisions
@@ -258,9 +263,9 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
           l2 = temp;
         }
 
-        IntersectionType intersectionType =
-            intersect(l1, l2, quadtree->collisionWorld->timeStep);
-        if (intersectionType != NO_INTERSECTION) {
+        // IntersectionType intersectionType =
+        //     intersect(l1, l2, quadtree->collisionWorld->timeStep);
+        if (fastIntersect(l1, l2, quadtree->collisionWorld->timeStep)) {
           
           
           IntersectionEventNode* newNode = malloc(sizeof(IntersectionEventNode));
@@ -285,7 +290,7 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
           
           if (!alreadyAdded){
             IntersectionEventList_appendNode(intersectionEventList, l1, l2,
-                                    intersectionType);
+                                    intersect(l1, l2, quadtree->collisionWorld->timeStep));
             numLineLineCollisions++;
           }
           
