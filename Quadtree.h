@@ -11,7 +11,7 @@
 #include "Vec.h"
 #include "IntersectionEventList.h"
 
-#define MAX_LINES_PER_NODE 100
+#define MAX_LINES_PER_NODE 160
 
 typedef struct Quadtree Quadtree;
 struct Quadtree {
