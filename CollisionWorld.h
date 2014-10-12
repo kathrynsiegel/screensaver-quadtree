@@ -41,8 +41,6 @@ struct CollisionWorld {
 
   // Record the total number of line-line intersections.
   unsigned int numLineLineCollisions;
-  
-  unsigned int numLineLineCollisions_new;
 };
 typedef struct CollisionWorld CollisionWorld;
 

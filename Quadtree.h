@@ -47,6 +47,9 @@ bool shouldDivideTree(Quadtree* quadtree);
 // Instantiates and fills the four quadrants of the tree
 void divideTree(Quadtree* quadtree);
 
+// Finds all of the lines that should belong to this quadtree level and adds them
+void findLines(Quadtree* quadtree);
+
 // Adds the line to the quadtree structure
 bool addLine(Quadtree* quadtree, Line* line);
 
