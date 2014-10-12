@@ -119,6 +119,7 @@ inline unsigned int getNumLinesUnder(Quadtree* quadtree){
   }
   return numLinesUnder;
 }
+
 inline bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
@@ -140,6 +141,20 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   Vec line_p2 = line->p2;
   Vec line_p3 = Vec_add(line_p1, Vec_multiply(line->velocity, quadtree->collisionWorld->timeStep));
   Vec line_p4 = Vec_add(line_p2, Vec_multiply(line->velocity, quadtree->collisionWorld->timeStep));
+  
+  // perform a preliminary check if all of the parallelogram points are off to a side of the box
+//   if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
+//     return false;
+//   }
+//   if (line_p1.y > box_p1.y && line_p2.y > box_p1.y && line_p3.y > box_p1.y && line_p4.x > box_p1.y){
+//     return false;
+//   }
+//   if (line_p1.y < box_p4.y && line_p2.y < box_p4.y && line_p3.y < box_p4.y && line_p4.y < box_p4.y){
+//     return false;
+//   }
+//   if (line_p1.x < box_p1.x && line_p2.x < box_p1.x && line_p3.x < box_p1.x && line_p4.x < box_p1.x){
+//     return false;
+//   }
   
   // check each of the points in the parallelogram 
   // and each of the points in the bounding box
