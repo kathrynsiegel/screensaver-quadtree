@@ -257,10 +257,10 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
   CILK_C_REGISTER_REDUCER(r);
   if (quadtree->isLeaf){
     // iterate through all lines in the quadtree and detect collisions
-    for (int i = 0; i < quadtree->numOfLines; i++) {
+    cilk_for (int i = 0; i < quadtree->numOfLines; i++) {
     Line *l1 = quadtree->lines[i];
 
-      for (int j = i + 1; j < quadtree->numOfLines; j++) {
+      cilk_for (int j = i + 1; j < quadtree->numOfLines; j++) {
         Line *l2 = quadtree->lines[j];
 
         // intersect expects compareLines(l1, l2) < 0 to be true.
@@ -308,27 +308,27 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
   } 
   else {
     // add the collisions for all of the leaves of this quadtree
-    cilk_for (int i = 0; i < 4; i++) {
-      REDUCER_VIEW(r) += detectCollisions(quadtree->quadrants[i], intersectionEventList);
-    }
+    // cilk_for (int i = 0; i < 4; i++) {
+    //   REDUCER_VIEW(r) += detectCollisions(quadtree->quadrants[i], intersectionEventList);
+    // }
 
-//     IntersectionEventList eventList0 = IntersectionEventList_make();
-//     IntersectionEventList eventList1 = IntersectionEventList_make();
-//     IntersectionEventList eventList2 = IntersectionEventList_make();
-//     IntersectionEventList eventList3 = IntersectionEventList_make();
-//     int numLineLineCollisions0 = cilk_spawn detectCollisions(quadtree->quadrants[0], &eventList0);
-//     int numLineLineCollisions1 = cilk_spawn detectCollisions(quadtree->quadrants[1], &eventList1);
-//     int numLineLineCollisions2 = cilk_spawn detectCollisions(quadtree->quadrants[2], &eventList2);
-//     numLineLineCollisions += detectCollisions(quadtree->quadrants[3], &eventList3);
-//     cilk_sync;
-//     numLineLineCollisions += numLineLineCollisions0;
-//     numLineLineCollisions += numLineLineCollisions1;
-//     numLineLineCollisions += numLineLineCollisions2;
-//     // merge lists
-//     IntersectionEventList_appendEventList(intersectionEventList, &eventList0);
-//     IntersectionEventList_appendEventList(intersectionEventList, &eventList1);
-//     IntersectionEventList_appendEventList(intersectionEventList, &eventList2);
-//     IntersectionEventList_appendEventList(intersectionEventList, &eventList3);
+    IntersectionEventList eventList0 = IntersectionEventList_make();
+    IntersectionEventList eventList1 = IntersectionEventList_make();
+    IntersectionEventList eventList2 = IntersectionEventList_make();
+    IntersectionEventList eventList3 = IntersectionEventList_make();
+    int numLineLineCollisions0 = cilk_spawn detectCollisions(quadtree->quadrants[0], &eventList0);
+    int numLineLineCollisions1 = cilk_spawn detectCollisions(quadtree->quadrants[1], &eventList1);
+    int numLineLineCollisions2 = cilk_spawn detectCollisions(quadtree->quadrants[2], &eventList2);
+    REDUCER_VIEW(r) += detectCollisions(quadtree->quadrants[3], &eventList3);
+    cilk_sync;
+    REDUCER_VIEW(r) += numLineLineCollisions0;
+    REDUCER_VIEW(r) += numLineLineCollisions1;
+    REDUCER_VIEW(r) += numLineLineCollisions2;
+    // merge lists
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList0);
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList1);
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList2);
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList3);
   }
   int numLineLineCollisions = REDUCER_VIEW(r);
   CILK_C_UNREGISTER_REDUCER(r);
