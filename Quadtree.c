@@ -45,9 +45,10 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
 inline void Quadtree_delete(Quadtree* quadtree){
   free(quadtree->lines);
   if (!(quadtree->isLeaf)){
-    for (int i = 0; i < 4; i++) {
-      Quadtree_delete(quadtree->quadrants[i]);
-    }
+    Quadtree_delete(quadtree->quadrants[0]);
+    Quadtree_delete(quadtree->quadrants[1]);
+    Quadtree_delete(quadtree->quadrants[2]);
+    Quadtree_delete(quadtree->quadrants[3]);
     free(quadtree->quadrants);
   }
   free(quadtree);
@@ -60,8 +61,10 @@ bool Quadtree_update(Quadtree* quadtree){
   }
   else {
     // add the collisions for all of the leaves of this quadtree
-    unsigned int numLinesUnder = 0;
-    for (int i = 0; i < 4; i++) {
+    // unsigned int numLinesUnder = 0;
+    CILK_C_REDUCER_OPADD(rUnder, int, 0);
+    CILK_C_REGISTER_REDUCER(rUnder);
+    cilk_for (int i = 0; i < 4; i++) {
        shouldDestroy = Quadtree_update(quadtree->quadrants[i]);
        if (shouldDestroy) {
          Vec upperLeft = quadtree->quadrants[i]->upperLeft;
@@ -71,8 +74,10 @@ bool Quadtree_update(Quadtree* quadtree){
            upperLeft, 
            lowerRight);
        }
-       numLinesUnder += getNumLinesUnder(quadtree->quadrants[i]);
+       REDUCER_VIEW(rUnder) += getNumLinesUnder(quadtree->quadrants[i]);
     }
+    unsigned int numLinesUnder = REDUCER_VIEW(rUnder);
+    CILK_C_UNREGISTER_REDUCER(rUnder);
     if (numLinesUnder <= MAX_LINES_PER_NODE) {
       shouldDestroy = true;
     }
@@ -114,10 +119,10 @@ inline void divideTree(Quadtree* quadtree){
 }
 
 unsigned int getNumLinesUnder(Quadtree* quadtree){
-  unsigned int numLinesUnder = 0;
   if (quadtree->isLeaf) {
     return quadtree->numOfLines;
   }
+  unsigned int numLinesUnder = 0;
   for (int i = 0; i < 4; i++) {
     numLinesUnder += getNumLinesUnder(quadtree->quadrants[i]);
   }
@@ -218,39 +223,8 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
     return true;
   }
 
-//   if (intersectLines(box_p1, box_p2, line_p2, line_p4)){
-//     return true;
-//   }
-//   if (intersectLines(box_p1, box_p3, line_p2, line_p4)){
-//     return true;
-//   }
-//   if (intersectLines(box_p2, box_p4, line_p2, line_p4)){
-//     return true;
-//   }
-//   if (intersectLines(box_p3, box_p4, line_p2, line_p4)){
-//     return true;
-//   }
-  
-//   if (intersectLines(box_p1, box_p2, line_p3, line_p4)){
-//     return true;
-//   }
-//   if (intersectLines(box_p1, box_p3, line_p3, line_p4)){
-//     return true;
-//   }
-//   if (intersectLines(box_p2, box_p4, line_p3, line_p4)){
-//     return true;
-//   }
-//   if (intersectLines(box_p3, box_p4, line_p3, line_p4)){
-//     return true;
-//   }
-
   return false;
 }
-
-// Bentley Ottman
-// inline unsigned int fastDetectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
-
-// }
 
 unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
   CILK_C_REDUCER_OPADD(r, int, 0);
@@ -274,44 +248,14 @@ unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* interse
         // IntersectionType intersectionType =
         //     intersect(l1, l2, quadtree->collisionWorld->timeStep);
         if (fastIntersect(l1, l2, quadtree->collisionWorld->timeStep)) {
-          
-          
-          // IntersectionEventNode* newNode = malloc(sizeof(IntersectionEventNode));
-          // newNode->l1 = l1;
-          // newNode->l2 = l2;
-          
-          // // check to make sure this collision has not been added already
-          
-          // bool alreadyAdded = false;
-          // IntersectionEventNode* curNode = intersectionEventList->head;
-          // IntersectionEventNode* nextNode = NULL;
-          
-          // while (curNode != NULL) {
-          //   nextNode = curNode->next;
-          //   if (IntersectionEventNode_compareData(newNode, curNode) == 0){
-          //     alreadyAdded=true;
-          //   }
-          //   curNode = nextNode;
-          // }
-          
-          // free(newNode);
-          
-          // if (!alreadyAdded){
             IntersectionEventList_appendNode(intersectionEventList, l1, l2,
                                     intersect(l1, l2, quadtree->collisionWorld->timeStep));
             REDUCER_VIEW(r)++;
-          // }
-          
         }
       }
     }
   } 
   else {
-    // add the collisions for all of the leaves of this quadtree
-    // cilk_for (int i = 0; i < 4; i++) {
-    //   REDUCER_VIEW(r) += detectCollisions(quadtree->quadrants[i], intersectionEventList);
-    // }
-
     IntersectionEventList eventList0 = IntersectionEventList_make();
     IntersectionEventList eventList1 = IntersectionEventList_make();
     IntersectionEventList eventList2 = IntersectionEventList_make();
