@@ -69,8 +69,12 @@ unsigned int CollisionWorld_getNumOfLines(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
-  // precalculate the velocity of the line
+  // precalculate the length of the line
   line->length = Vec_length(Vec_subtract(line->p1, line->p2));
+  
+  // precalculate the parallelogram created by initial velocity
+  updateParallelogram(line, collisionWorld->timeStep);
+  
   collisionWorld->lines[collisionWorld->numOfLines] = line;
   collisionWorld->numOfLines++;
   // recreate the quadtree (this setup is called before the timed portion)
@@ -94,7 +98,7 @@ void CollisionWorld_updateLines(CollisionWorld* collisionWorld) {
 
 void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
   double t = collisionWorld->timeStep;
-  for (int i = 0; i < collisionWorld->numOfLines; i++) {
+  cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
     Line *line = collisionWorld->lines[i];
     line->p1 = Vec_add(line->p1, Vec_multiply(line->velocity, t));
     line->p2 = Vec_add(line->p2, Vec_multiply(line->velocity, t));
@@ -102,7 +106,9 @@ void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
-  cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
+  CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
+  CILK_C_REGISTER_REDUCER(numCollisionsReducer);
+  for (int i = 0; i < collisionWorld->numOfLines; i++) {
     Line *line = collisionWorld->lines[i];
     bool collide = false;
 
@@ -132,9 +138,14 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
     }
     // Update total number of collisions.
     if (collide == true) {
-      collisionWorld->numLineWallCollisions++;
+      REDUCER_VIEW(numCollisionsReducer)++;
     }
+    
+    // precalculate the parallelogram created by final velocity
+    updateParallelogram(line, collisionWorld->timeStep);
   }
+  collisionWorld->numLineWallCollisions += REDUCER_VIEW(numCollisionsReducer);
+  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
 }
 
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
@@ -190,19 +201,21 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
     if (minNode != startNode) {
       IntersectionEventNode_swapData(minNode, startNode);
     }
+    CollisionWorld_collisionSolver(collisionWorld, startNode->l1, startNode->l2,
+                                   startNode->intersectionType);
     startNode = startNode->next;
   }
 
   collisionWorld->numLineLineCollisions += numCollisions;
 
   // Call the collision solver for each intersection event.
-  IntersectionEventNode* curNode = intersectionEventList.head;
-
-  while (curNode != NULL) {
-    CollisionWorld_collisionSolver(collisionWorld, curNode->l1, curNode->l2,
-                                   curNode->intersectionType);
-    curNode = curNode->next;
-  }
+//   IntersectionEventNode* curNode = intersectionEventList.head;
+// 
+//   while (curNode != NULL) {
+//     CollisionWorld_collisionSolver(collisionWorld, curNode->l1, curNode->l2,
+//                                    curNode->intersectionType);
+//     curNode = curNode->next;
+//   }
 
   //IntersectionEventList_deleteNodes(&intersectionEventList);
   
