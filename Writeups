@@ -61,9 +61,9 @@ Finally, we reordered function calls in the intersect method and rewrote part of
   6.88      2.70     0.22    13565     0.02     0.03  shouldDivideTree
   5.31      2.87     0.17 46418439     0.00     0.00  Vec_subtract
 
-9. We made a reducer for the intersectionEventList and also used an OpAdd reducer to track 
-the number of collisions. To account for duplicate events being added to the reducer, we
-modified the event list sort to remove any duplicates it finds while sorting.
+9. We made a reducer for the intersectionEventList and also used an OpAdd reducer to track the number of collisions. We then parallelized the methods used to count collisions; using a reducer allowed us to avoid race conditions. We were also able to remove a large amount of the logic inside our line collision counting method, detectCollisionsReducer, which sped up our code significantly but double counted collisions. To account for these duplicate events being added to the reducer, we modified the event list sort to remove any duplicates it finds while sorting, also using a reducer. 
+We also parallelized our aggregation of the counts reported from the four children of any quadtree node. Using cilk_spawn, we counted the number of line intersections in each quadtree node child with a different thread, and then aggregated those counts after syncing up these threads.
+Apart from these main parallelizations, we also parallelized the quadtree delete method, as well as various methods in CollisionWorld. Most of these parallelizations did not result in significant speedup, with the exception of the quadtree delete method.
 
 jlmart88@desflurane:~/project2$ cilkscreen ./Screensaver 100
 Cilkscreen Race Detector V2.0.0, Build 3566
@@ -74,3 +74,63 @@ Elapsed execution time: 20.491324s
 0 Line-Line Collisions
 ---- END RESULTS ----
 No errors found by Cilkscreen
+
+10. I see a parallelism of 4.15 across the whole program, and a parallelism of 118.14 across the parallel regions. This is the maximum amount of parallelism that we have achieved so far. You can see the results of cilkview as follows:
+
+Whole Program Statistics
+1) Parallelism Profile
+   Work :					 4,953,127,778 instructions
+   Span :					 1,192,268,773 instructions
+   Burdened span :				 1,448,094,416 instructions
+   Parallelism :				 4.15
+   Burdened parallelism :			 3.42
+   Number of spawns/syncs:			 5,135,057
+   Average instructions / strand :		 321
+   Strands along span :				 22,941
+   Average instructions / strand on span :	 51,971
+   Total number of atomic instructions : 	 5,141,191
+   Frame count :				 10,405,083
+
+2) Speedup Estimate
+     2 processors:	 1.34 - 2.00
+     4 processors:	 1.61 - 4.00
+     8 processors:	 1.79 - 4.15
+    16 processors:	 1.89 - 4.15
+    32 processors:	 1.95 - 4.15
+    64 processors:	 1.98 - 4.15
+   128 processors:	 2.00 - 4.15
+   256 processors:	 2.00 - 4.15
+
+Cilk Parallel Region(s) Statistics - Elapsed time: 0.047 seconds
+1) Parallelism Profile
+   Work :					 3,792,965,931 instructions
+   Span :					 32,106,926 instructions
+   Burdened span :				 287,932,569 instructions
+   Parallelism :				 118.14
+   Burdened parallelism :			 13.17
+   Number of spawns/syncs:			 5,135,057
+   Average instructions / strand :		 246
+   Strands along span :				 11,470
+   Average instructions / strand on span :	 2,799
+   Total number of atomic instructions : 	 5,141,191
+   Frame count :				 10,405,083
+   Entries to parallel region :			 1,113
+
+2) Speedup Estimate
+     2 processors:	 1.77 - 2.00
+     4 processors:	 2.88 - 4.00
+     8 processors:	 4.20 - 8.00
+    16 processors:	 5.45 - 16.00
+    32 processors:	 6.40 - 32.00
+    64 processors:	 7.01 - 64.00
+   128 processors:	 7.36 - 118.14
+   256 processors:	 7.55 - 118.14
+
+11. We fine-tuned N to be 155--we found that this was the optimal N for the 12 processors. Additionally, we found that by decreasing the number of inlined methods, we actually obtained a significant speedup. In the end, our results were as follows:
+
+Number of frames = 4000
+---- RESULTS ----
+Elapsed execution time: 2.334781s
+1262 Line-Wall Collisions
+19806 Line-Line Collisions
+---- END RESULTS ----
