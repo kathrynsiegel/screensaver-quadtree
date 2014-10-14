@@ -122,10 +122,13 @@ unsigned int getNumLinesUnder(Quadtree* quadtree){
   if (quadtree->isLeaf) {
     return quadtree->numOfLines;
   }
-  unsigned int numLinesUnder = 0;
-  for (int i = 0; i < 4; i++) {
-    numLinesUnder += getNumLinesUnder(quadtree->quadrants[i]);
+  CILK_C_REDUCER_OPADD(ru, int, 0);
+  CILK_C_REGISTER_REDUCER(ru);
+  cilk_for (int i = 0; i < 4; i++) {
+    REDUCER_VIEW(ru) += getNumLinesUnder(quadtree->quadrants[i]);
   }
+  unsigned int numLinesUnder = REDUCER_VIEW(ru);
+  CILK_C_UNREGISTER_REDUCER(ru);
   return numLinesUnder;
 }
 
@@ -284,11 +287,11 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
     // iterate through all lines in the quadtree and detect collisions
     double timestep = quadtree->collisionWorld->timeStep;
     
-    for (int i = 0; i < quadtree->numOfLines; i++) {
+    cilk_for (int i = 0; i < quadtree->numOfLines; i++) {
       Line *l1 = quadtree->lines[i];
 
 
-      for (int j = i+1; j < quadtree->numOfLines; j++) {
+      cilk_for (int j = i+1; j < quadtree->numOfLines; j++) {
         Line *l2 = quadtree->lines[j];
 
         // intersect expects compareLines(l1, l2) < 0 to be true.
