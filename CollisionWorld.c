@@ -108,7 +108,7 @@ void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
 void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
   CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
   CILK_C_REGISTER_REDUCER(numCollisionsReducer);
-  for (int i = 0; i < collisionWorld->numOfLines; i++) {
+  cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
     Line *line = collisionWorld->lines[i];
     bool collide = false;
 

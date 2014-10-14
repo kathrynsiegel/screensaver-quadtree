@@ -45,10 +45,11 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
 inline void Quadtree_delete(Quadtree* quadtree){
   free(quadtree->lines);
   if (!(quadtree->isLeaf)){
-    Quadtree_delete(quadtree->quadrants[0]);
-    Quadtree_delete(quadtree->quadrants[1]);
-    Quadtree_delete(quadtree->quadrants[2]);
+    cilk_spawn Quadtree_delete(quadtree->quadrants[0]);
+    cilk_spawn Quadtree_delete(quadtree->quadrants[1]);
+    cilk_spawn Quadtree_delete(quadtree->quadrants[2]);
     Quadtree_delete(quadtree->quadrants[3]);
+    cilk_sync;
     free(quadtree->quadrants);
   }
   free(quadtree);
