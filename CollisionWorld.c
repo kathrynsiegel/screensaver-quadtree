@@ -149,12 +149,6 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
-  
-//  IntersectionEventList intersectionEventList = IntersectionEventList_make();
-//  Quadtree_update(collisionWorld->quadtree);
-//   
-//  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
-  
   IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
   intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
   /* initial value */ (IntersectionEventList) { .head = NULL, .tail = NULL });
