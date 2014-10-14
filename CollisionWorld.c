@@ -33,6 +33,7 @@
 #include "Line.h"
 #include "Quadtree.h"
 
+#include <cilk/cilk.h>
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
@@ -101,7 +102,7 @@ void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
-  for (int i = 0; i < collisionWorld->numOfLines; i++) {
+  cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
     Line *line = collisionWorld->lines[i];
     bool collide = false;
 
@@ -234,22 +235,24 @@ void CollisionWorld_collisionSolver(CollisionWorld* collisionWorld,
   // energy.
   if (intersectionType == ALREADY_INTERSECTED) {
     Vec p = getIntersectionPoint(l1->p1, l1->p2, l2->p1, l2->p2);
+    double l1_vel_len = Vec_length(l1->velocity);
+    double l2_vel_len = Vec_length(l2->velocity);
 
     if (Vec_length(Vec_subtract(l1->p1, p))
         < Vec_length(Vec_subtract(l1->p2, p))) {
       l1->velocity = Vec_multiply(Vec_normalize(Vec_subtract(l1->p2, p)),
-                                  Vec_length(l1->velocity));
+                                  l1_vel_len);
     } else {
       l1->velocity = Vec_multiply(Vec_normalize(Vec_subtract(l1->p1, p)),
-                                  Vec_length(l1->velocity));
+                                  l1_vel_len);
     }
     if (Vec_length(Vec_subtract(l2->p1, p))
         < Vec_length(Vec_subtract(l2->p2, p))) {
       l2->velocity = Vec_multiply(Vec_normalize(Vec_subtract(l2->p2, p)),
-                                  Vec_length(l2->velocity));
+                                  l2_vel_len);
     } else {
       l2->velocity = Vec_multiply(Vec_normalize(Vec_subtract(l2->p1, p)),
-                                  Vec_length(l2->velocity));
+                                  l2_vel_len);
     }
     return;
   }
