@@ -202,17 +202,6 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 
   collisionWorld->numLineLineCollisions += numCollisions;
 
-  // Call the collision solver for each intersection event.
-//   IntersectionEventNode* curNode = intersectionEventList.head;
-// 
-//   while (curNode != NULL) {
-//     CollisionWorld_collisionSolver(collisionWorld, curNode->l1, curNode->l2,
-//                                    curNode->intersectionType);
-//     curNode = curNode->next;
-//   }
-
-  //IntersectionEventList_deleteNodes(&intersectionEventList);
-  
   CILK_C_UNREGISTER_REDUCER(intersectionEventListReducer);
 }
 
