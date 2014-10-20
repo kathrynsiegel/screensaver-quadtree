@@ -57,7 +57,7 @@ bool shouldDivideTree(Quadtree* quadtree);
 // Instantiates and fills the four quadrants of the tree
 void divideTree(Quadtree* quadtree);
 
-unsigned int getNumLinesUnder(Quadtree* quadtree);
+void getNumLinesUnder(Quadtree* quadtree, CILK_C_REDUCER_OPADD_TYPE(int)* numOfLines);
 
 // Finds all of the lines that should belong to this quadtree level and adds them
 void findLines(Quadtree* quadtree);

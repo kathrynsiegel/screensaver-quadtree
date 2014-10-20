@@ -75,7 +75,7 @@ bool Quadtree_update(Quadtree* quadtree){
            upperLeft, 
            lowerRight);
        }
-       REDUCER_VIEW(rUnder) += getNumLinesUnder(quadtree->quadrants[i]);
+       getNumLinesUnder(quadtree->quadrants[i], &rUnder);
     }
     unsigned int numLinesUnder = REDUCER_VIEW(rUnder);
     CILK_C_UNREGISTER_REDUCER(rUnder);
@@ -119,18 +119,15 @@ inline void divideTree(Quadtree* quadtree){
     quadtree->lowerRight);
 }
 
-unsigned int getNumLinesUnder(Quadtree* quadtree){
+void getNumLinesUnder(Quadtree* quadtree, CILK_C_REDUCER_OPADD_TYPE(int)* numOfLines){
   if (quadtree->isLeaf) {
-    return quadtree->numOfLines;
+    REDUCER_VIEW(*numOfLines) += quadtree->numOfLines;
   }
-  CILK_C_REDUCER_OPADD(ru, int, 0);
-  CILK_C_REGISTER_REDUCER(ru);
-  cilk_for (int i = 0; i < 4; i++) {
-    REDUCER_VIEW(ru) += getNumLinesUnder(quadtree->quadrants[i]);
+  else {
+    cilk_for (int i = 0; i < 4; i++) {
+      getNumLinesUnder(quadtree->quadrants[i], numOfLines);
+    }
   }
-  unsigned int numLinesUnder = REDUCER_VIEW(ru);
-  CILK_C_UNREGISTER_REDUCER(ru);
-  return numLinesUnder;
 }
 
 inline bool addLine(Quadtree* quadtree, Line* line){
