@@ -48,7 +48,7 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
 
 void Quadtree_delete(Quadtree* quadtree);
 
-bool Quadtree_update(Quadtree* quadtree);
+void Quadtree_update(Quadtree* quadtree);
 
 // Returns true if this tree needs to divide itself into quadrants
 // and adds all lines in this quadtree
@@ -56,8 +56,6 @@ bool shouldDivideTree(Quadtree* quadtree);
 
 // Instantiates and fills the four quadrants of the tree
 void divideTree(Quadtree* quadtree);
-
-void getNumLinesUnder(Quadtree* quadtree, CILK_C_REDUCER_OPADD_TYPE(int)* numOfLines);
 
 // Finds all of the lines that should belong to this quadtree level and adds them
 void findLines(Quadtree* quadtree);
