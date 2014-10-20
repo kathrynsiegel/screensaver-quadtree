@@ -50,7 +50,7 @@ CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   collisionWorld->timeStep = 0.5;
   collisionWorld->lines = malloc(capacity * sizeof(Line*));
   collisionWorld->numOfLines = 0;
-  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), 0, NULL);
   
   return collisionWorld;
 }
@@ -79,7 +79,7 @@ void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
   collisionWorld->numOfLines++;
   // recreate the quadtree (this setup is called before the timed portion)
   Quadtree_delete(collisionWorld->quadtree);
-  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), collisionWorld->numOfLines, NULL);
 }
 
 Line* CollisionWorld_getLine(CollisionWorld* collisionWorld,

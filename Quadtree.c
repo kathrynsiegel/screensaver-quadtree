@@ -19,11 +19,13 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight) {
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight, unsigned int numRelLines, Quadtree* p) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
   if (quadtree == NULL) {
     return NULL;
   }
+
+  quadtree->parent = p;
 
   quadtree->collisionWorld = collisionWorld;
   quadtree->upperLeft = upperLeft;
@@ -32,6 +34,9 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   quadtree->numOfLines = 0;
   
   quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));
+
+  quadtree->relevantLines = malloc(numRelLines * sizeof(Line*));
+  quadtree->numRelevantLines = 0;
   
   quadtree->isLeaf = !shouldDivideTree(quadtree);
   if (!(quadtree->isLeaf)){
@@ -44,6 +49,7 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
 
 inline void Quadtree_delete(Quadtree* quadtree){
   free(quadtree->lines);
+  free(quadtree->relevantLines);
   if (!(quadtree->isLeaf)){
     cilk_spawn Quadtree_delete(quadtree->quadrants[0]);
     cilk_spawn Quadtree_delete(quadtree->quadrants[1]);
@@ -73,7 +79,7 @@ bool Quadtree_update(Quadtree* quadtree){
          Quadtree_delete(quadtree->quadrants[i]);
          quadtree->quadrants[i] = Quadtree_new(quadtree->collisionWorld, 
            upperLeft, 
-           lowerRight);
+           lowerRight,quadtree->numRelevantLines,quadtree->parent);
        }
        REDUCER_VIEW(rUnder) += getNumLinesUnder(quadtree->quadrants[i]);
     }
@@ -90,17 +96,20 @@ bool Quadtree_update(Quadtree* quadtree){
 inline bool shouldDivideTree(Quadtree* quadtree){
   quadtree->numOfLines = 0;
   int qNum = quadtree->collisionWorld->numOfLines;
+  bool shouldDivide = false;
   for (int i = 0; i < qNum; i++){
     Line* line = quadtree->collisionWorld->lines[i];
-    
-    if (isLineInQuadtree(quadtree, line)){
-      if (!addLine(quadtree, line)){
+    bool isLineInside = isLineInQuadtree(quadtree, line);
+    if (isLineInside){
+      if (!shouldDivide && !addLine(quadtree, line)) {
         // if the line did not add, then there are too many lines, so divide the quadtree 
-        return true;
+        shouldDivide = true;
       }
+      quadtree->relevantLines[quadtree->numRelevantLines] = line;
+      quadtree->numRelevantLines++;
     }
   }
-  return false;
+  return shouldDivide;
 }
 
 inline void divideTree(Quadtree* quadtree){
@@ -108,16 +117,16 @@ inline void divideTree(Quadtree* quadtree){
   Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);;
   quadtree->quadrants[0] = Quadtree_new(quadtree->collisionWorld, 
     quadtree->upperLeft, 
-    centerPoint);
+    centerPoint, quadtree->numRelevantLines, quadtree);
   quadtree->quadrants[1] = Quadtree_new(quadtree->collisionWorld, 
     Vec_make(centerPoint.x, quadtree->upperLeft.y), 
-    Vec_make(quadtree->lowerRight.x, centerPoint.y));
+    Vec_make(quadtree->lowerRight.x, centerPoint.y), quadtree->numRelevantLines, quadtree);
   quadtree->quadrants[2] = Quadtree_new(quadtree->collisionWorld, 
     Vec_make(quadtree->upperLeft.x, centerPoint.y), 
-    Vec_make(centerPoint.x, quadtree->lowerRight.y));
+    Vec_make(centerPoint.x, quadtree->lowerRight.y), quadtree->numRelevantLines, quadtree);
   quadtree->quadrants[3] = Quadtree_new(quadtree->collisionWorld, 
     centerPoint, 
-    quadtree->lowerRight);
+    quadtree->lowerRight, quadtree->numRelevantLines, quadtree);
 }
 
 unsigned int getNumLinesUnder(Quadtree* quadtree){

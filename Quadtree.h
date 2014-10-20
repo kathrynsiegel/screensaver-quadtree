@@ -35,8 +35,13 @@ typedef struct Quadtree {
   Line** lines;
   unsigned int numOfLines;
 
+  Line** relevantLines;
+  unsigned int numRelevantLines;
+
   // Array containing four quadrants of this Quadtree
   Quadtree** quadrants;
+
+  Quadtree* parent;
   
   // True if the Quadtree contains less than MAX_LINES_PER_NODE lines
   bool isLeaf;
@@ -44,7 +49,7 @@ typedef struct Quadtree {
 
 
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight);
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight, unsigned int numRelLines, Quadtree* p);
 
 void Quadtree_delete(Quadtree* quadtree);
 
