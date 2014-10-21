@@ -35,18 +35,20 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
     return ALREADY_INTERSECTED;
   }
 
-  Vec velocity;
   Vec p1;
   Vec p2;
-  Vec v1 = Vec_makeFromLine(*l1);
-  Vec v2 = Vec_makeFromLine(*l2);
 
   // Get relative velocity.
-  velocity = Vec_subtract(l2->velocity, l1->velocity);
+  Vec shift;
+  shift.x = l2->shift.x - l1->shift.x;
+  shift.y = l2->shift.y - l1->shift.y;
 
   // Get the parallelogram.
-  p1 = Vec_add(l2->p1, Vec_multiply(velocity, time));
-  p2 = Vec_add(l2->p2, Vec_multiply(velocity, time));
+  p1.x = l2->p1.x + shift.x;
+  p1.y = l2->p1.y + shift.y;
+  
+  p2.x = l2->p2.x + shift.x;
+  p2.y = l2->p2.y + shift.y;
 
   if (pointInParallelogram(l1->p1, l2->p1, l2->p2, p1, p2)
       && pointInParallelogram(l1->p2, l2->p1, l2->p2, p1, p2)) {
@@ -69,6 +71,8 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
     bottom_intersected = true;
   }
 
+  Vec v1 = Vec_makeFromLine(*l1);
+  Vec v2 = Vec_makeFromLine(*l2);
   double angle = Vec_angle(v1, v2);
 
   if (num_line_intersections == 2 || (top_intersected && angle < 0) || (bottom_intersected && angle > 0)) {
@@ -85,13 +89,21 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
 inline IntersectionType fastIntersect(Line *l1, Line *l2, double time) {
   assert(compareLines(l1, l2) < 0);
 
+  Vec p1;
+  Vec p2;
+
   // Get relative velocity.
-  Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
+  Vec shift;
+  shift.x = l2->shift.x - l1->shift.x;
+  shift.y = l2->shift.y - l1->shift.y;
 
   // Get the parallelogram.
-  Vec p1 = Vec_add(l2->p1, Vec_multiply(velocity, time));
-  Vec p2 = Vec_add(l2->p2, Vec_multiply(velocity, time));
-
+  p1.x = l2->p1.x + shift.x;
+  p1.y = l2->p1.y + shift.y;
+  
+  p2.x = l2->p2.x + shift.x;
+  p2.y = l2->p2.y + shift.y;
+  
   if (pointInParallelogram(l1->p1, l2->p1, l2->p2, p1, p2) ||
     pointInParallelogram(l1->p2, l2->p1, l2->p2, p1, p2)) {
     return true;
