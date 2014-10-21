@@ -27,6 +27,9 @@
 #include "Line.h"
 #include "Vec.h"
 
+#define MIN(a,b) ((a<b)?a:b)
+#define MAX(a,b) ((a>b)?a:b)
+
 // Detect if lines l1 and l2 will intersect between now and the next time step.
 inline IntersectionType intersect(Line *l1, Line *l2, double time) {
   assert(compareLines(l1, l2) < 0);
@@ -88,25 +91,48 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, double time) {
   // Get relative velocity.
   Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
 
+  Vec l1p1 = l1->p1;
+  Vec l1p2 = l1->p2;
+  Vec l2p1 = l2->p1;
+  Vec l2p2 = l2->p2;
+
   // Get the parallelogram.
-  Vec p1 = Vec_add(l2->p1, Vec_multiply(velocity, time));
-  Vec p2 = Vec_add(l2->p2, Vec_multiply(velocity, time));
+  Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
+  Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
 
-  if (pointInParallelogram(l1->p1, l2->p1, l2->p2, p1, p2) ||
-    pointInParallelogram(l1->p2, l2->p1, l2->p2, p1, p2)) {
-    return true;
-  }
+  // double par_x_min = MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x));
+  // double par_x_max = MAX(MAX(l2p1.x,l2p2.x),MAX(p1.x,p2.x));
+  // double par_y_min = MIN(MIN(l2p1.y,l2p2.y),MIN(p1.y,p2.y));
+  // double par_y_max = MAX(MAX(l2p1.y,l2p2.y),MAX(p1.y,p2.y));
 
-  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
-    return true;
-  }
-  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
-    return true;
-  }
-  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
-    return true;
-  }
+  // if (MAX(l1p1.x,l1p2.x) < par_x_min) {
+  //   return false;
+  // }
+  // if (MIN(l1p1.x,l1p2.x) > par_x_max) {
+  //   return false;
+  // }
+  // if (MAX(l1p1.y,l1p2.y) < par_y_min) {
+  //   return false;
+  // }
+  // if (MIN(l1p1.y,l1p2.y) > par_y_max) {
+  //   return false;
+  // }
 
+  if (pointInParallelogram(l1p1, l2p1, l2p2, p1, p2)) {
+    return true;
+  }
+  if (pointInParallelogram(l1p2, l2p1, l2p2, p1, p2)) {
+    return true;
+  }
+  if (intersectLines(l1p1, l1p2, l2p1, l2p2)) {
+    return true;
+  }
+  if (intersectLines(l1p1, l1p2, p1, p2)) {
+    return true;
+  }
+  if (intersectLines(l1p1, l1p2, p1, l2p1)) {
+    return true;
+  }
   return false;
 }
 
@@ -117,8 +143,7 @@ inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
   double d3 = direction(p1, p3, point);
   double d4 = direction(p2, p4, point);
 
-  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
-      && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+  if (d1 * d2 < 0 && d3 * d4 < 0) {
     return true;
   }
   return false;

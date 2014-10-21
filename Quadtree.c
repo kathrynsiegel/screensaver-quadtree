@@ -225,6 +225,27 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
       for (int j = i+1; j < quadtree->numOfLines; j++) {
         Line *l2 = quadtree->lines[j];
 
+        // if (compareLines(l1, l2) >= 0) {
+        //   if (fastIntersect(l2, l1, timestep)) {
+        //     IntersectionType type = intersect(l2, l1, timestep);
+        //     if (type != NO_INTERSECTION) {
+        //       IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l2, l1,
+        //                             type);
+        //       REDUCER_VIEW(*numCollisions)++;
+        //     }      
+        //   }
+        // }
+        // else {
+        //   if (fastIntersect(l1, l2, timestep)) {
+        //     IntersectionType type = intersect(l1, l2, timestep);
+        //     if (type != NO_INTERSECTION) {
+        //       IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l1, l2,
+        //                             intersect(l1, l2, timestep));
+        //       REDUCER_VIEW(*numCollisions)++;
+        //     }       
+        //   }
+        // }
+
         // intersect expects compareLines(l1, l2) < 0 to be true.
         // Swap l1 and l2, if necessary.
         if (compareLines(l1, l2) >= 0) {

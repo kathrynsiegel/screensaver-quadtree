@@ -37,6 +37,9 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
+#define MIN(a,b) ((a<b)?a:b)
+#define MAX(a,b) ((a>b)?a:b)
+
 CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   assert(capacity > 0);
 
@@ -71,6 +74,7 @@ unsigned int CollisionWorld_getNumOfLines(CollisionWorld* collisionWorld) {
 void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
   // precalculate the length of the line
   line->length = Vec_length(Vec_subtract(line->p1, line->p2));
+  // line->distancePerTimestep = Vec_multiply(line->velocity, collisionWorld->timeStep);
   
   // precalculate the parallelogram created by initial velocity
   updateParallelogram(line, collisionWorld->timeStep);
@@ -110,34 +114,25 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
   CILK_C_REGISTER_REDUCER(numCollisionsReducer);
   cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
     Line *line = collisionWorld->lines[i];
-    bool collide = false;
 
     // Right side
-    if ((line->p1.x > BOX_XMAX || line->p2.x > BOX_XMAX)
-        && (line->velocity.x > 0)) {
+    if (MAX(line->p1.x,line->p2.x) > BOX_XMAX && (line->velocity.x > 0)) {
       line->velocity.x = -line->velocity.x;
-      collide = true;
+      REDUCER_VIEW(numCollisionsReducer)++;
     }
     // Left side
-    if ((line->p1.x < BOX_XMIN || line->p2.x < BOX_XMIN)
-        && (line->velocity.x < 0)) {
+    else if (MIN(line->p1.x,line->p2.x) < BOX_XMIN && (line->velocity.x < 0)) {
       line->velocity.x = -line->velocity.x;
-      collide = true;
+      REDUCER_VIEW(numCollisionsReducer)++;
     }
     // Top side
-    if ((line->p1.y > BOX_YMAX || line->p2.y > BOX_YMAX)
-        && (line->velocity.y > 0)) {
+    else if (MAX(line->p1.y,line->p2.y) > BOX_YMAX && (line->velocity.y > 0)) {
       line->velocity.y = -line->velocity.y;
-      collide = true;
+      REDUCER_VIEW(numCollisionsReducer)++;
     }
     // Bottom side
-    if ((line->p1.y < BOX_YMIN || line->p2.y < BOX_YMIN)
-        && (line->velocity.y < 0)) {
+    else if (MIN(line->p1.y,line->p2.y) < BOX_YMIN && (line->velocity.y < 0)) {
       line->velocity.y = -line->velocity.y;
-      collide = true;
-    }
-    // Update total number of collisions.
-    if (collide == true) {
       REDUCER_VIEW(numCollisionsReducer)++;
     }
     
