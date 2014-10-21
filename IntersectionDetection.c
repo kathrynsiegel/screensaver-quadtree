@@ -82,10 +82,9 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time, Vec p1, Vec p
 
 inline IntersectionType fastIntersect(Line *l1, Line *l2, double time, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
-<<<<<<< HEAD
-
+  
   // Get relative velocity.
-  Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
+  // Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
 
   Vec l1p1 = l1->p1;
   Vec l1p2 = l1->p2;
@@ -93,8 +92,8 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, double time, Vec p1, V
   Vec l2p2 = l2->p2;
 
   // Get the parallelogram.
-  Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
-  Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
+  // Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
+  // Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
 
   // double par_x_min = MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x));
   // double par_x_max = MAX(MAX(l2p1.x,l2p2.x),MAX(p1.x,p2.x));
