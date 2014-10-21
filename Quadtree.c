@@ -57,7 +57,9 @@ void Quadtree_delete(Quadtree* quadtree){
 
 void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
-    if (shouldDivideTree(quadtree)) {
+    quadtree->isLeaf = !shouldDivideTree(quadtree);
+    if (!(quadtree->isLeaf)){
+      quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
       divideTree(quadtree);
     }
   }
