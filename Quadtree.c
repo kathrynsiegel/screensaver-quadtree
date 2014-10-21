@@ -32,7 +32,6 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   if (parent != NULL){
     quadtree->parent = parent;
     quadtree->depth = quadtree->parent->depth+1;
-    //printf("depth: %d\n",quadtree->depth);
   } else {
     quadtree->parent = NULL;
     quadtree->depth = 0;
@@ -46,8 +45,6 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   if (!(quadtree->isLeaf)){
     quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
     divideTree(quadtree);
-  } else {
-    updateLines(quadtree);
   }
   
   return quadtree;
@@ -68,7 +65,11 @@ void Quadtree_delete(Quadtree* quadtree){
 
 void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
-    updateLines(quadtree);
+    quadtree->isLeaf = !shouldDivideTree(quadtree);
+    if (!(quadtree->isLeaf)){
+      quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
+      divideTree(quadtree);
+    }
   }
   else {
     cilk_for (int i = 0; i < 4; i++) {
@@ -77,19 +78,20 @@ void Quadtree_update(Quadtree* quadtree){
   }
 }
 
-inline void updateLines(Quadtree* quadtree){
+inline bool shouldDivideTree(Quadtree* quadtree){
   quadtree->numOfLines = 0;
   int qNum = quadtree->collisionWorld->numOfLines;
   for (int i = 0; i < qNum; i++){
     Line* line = quadtree->collisionWorld->lines[i];
+    
     if (isLineInQuadtree(quadtree, line)){
-      addLine(quadtree, line);
+      if (!addLine(quadtree, line)){
+        // if the line did not add, then there are too many lines, so divide the quadtree 
+        return true;
+      }
     }
   }
-}
-
-inline bool shouldDivideTree(Quadtree* quadtree){
-  return quadtree->depth < MAX_DEPTH;
+  return false;
 }
 
 inline void divideTree(Quadtree* quadtree){
@@ -133,8 +135,6 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   Vec line_p2 = line->p2;
   Vec line_p3 = line->p3;
   Vec line_p4 = line->p4;
-  
-  
   
   // perform a preliminary check if all of the parallelogram points are off to a side of the box
   if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
@@ -184,29 +184,33 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   }
   
   //also check all the lines in the case that no points are inside the other shape
-  if (intersectLines(box_p1, box_p2, line_p1, line_p2)){
+  double dir121 = direction(box_p1, box_p2, line_p1);
+  double dir131 = direction(box_p1, box_p3, line_p1);
+  double dir241 = direction(box_p2, box_p4, line_p1);
+  double dir341 = direction(box_p3, box_p4, line_p1);
+  if (intersectLines(box_p1, box_p2, line_p1, line_p2, dir121)){
     return true;
   }
-  if (intersectLines(box_p1, box_p3, line_p1, line_p2)){
+  if (intersectLines(box_p1, box_p3, line_p1, line_p2, dir131)){
     return true;
   }
-  if (intersectLines(box_p2, box_p4, line_p1, line_p2)){
+  if (intersectLines(box_p2, box_p4, line_p1, line_p2, dir241)){
     return true;
   }
-  if (intersectLines(box_p3, box_p4, line_p1, line_p2)){
+  if (intersectLines(box_p3, box_p4, line_p1, line_p2, dir341)){
     return true;
   }
   
-  if (intersectLines(box_p1, box_p2, line_p1, line_p3)){
+  if (intersectLines(box_p1, box_p2, line_p1, line_p3, dir121)){
     return true;
   }
-  if (intersectLines(box_p1, box_p3, line_p1, line_p3)){
+  if (intersectLines(box_p1, box_p3, line_p1, line_p3, dir131)){
     return true;
   }
-  if (intersectLines(box_p2, box_p4, line_p1, line_p3)){
+  if (intersectLines(box_p2, box_p4, line_p1, line_p3, dir241)){
     return true;
   }
-  if (intersectLines(box_p3, box_p4, line_p1, line_p3)){
+  if (intersectLines(box_p3, box_p4, line_p1, line_p3, dir341)){
     return true;
   }
 

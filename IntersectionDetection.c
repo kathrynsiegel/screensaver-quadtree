@@ -27,11 +27,13 @@
 #include "Line.h"
 #include "Vec.h"
 
+#include <cilk/cilk.h>
+
 // Detect if lines l1 and l2 will intersect between now and the next time step.
 inline IntersectionType intersect(Line *l1, Line *l2, double time) {
   assert(compareLines(l1, l2) < 0);
 
-  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
+  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2, direction(l1->p1,l1->p2,l2->p1))) {
     return ALREADY_INTERSECTED;
   }
 
@@ -57,14 +59,15 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
   bool top_intersected = false;
   bool bottom_intersected = false;
   
-  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
+  double dir123 = direction(l1->p1, l1->p2, p1);
+  if (intersectLines(l1->p1, l1->p2, p1, p2, dir123)) {
     num_line_intersections++;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
+  if (intersectLines(l1->p1, l1->p2, p1, l2->p1, dir123)) {
     num_line_intersections++;
     top_intersected = true;
   }
-  if (intersectLines(l1->p1, l1->p2, p2, l2->p2)) {
+  if (intersectLines(l1->p1, l1->p2, p2, l2->p2, dir123)) {
     num_line_intersections++;
     bottom_intersected = true;
   }
@@ -85,25 +88,30 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
 inline IntersectionType fastIntersect(Line *l1, Line *l2, double time) {
   assert(compareLines(l1, l2) < 0);
 
+  Vec l1p1 = l1->p1;
+  Vec l2p1 = l2->p1;
+  Vec l2p2 = l2->p2;
+  Vec l1p2 = l1->p2;
+
   // Get relative velocity.
   Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
 
   // Get the parallelogram.
-  Vec p1 = Vec_add(l2->p1, Vec_multiply(velocity, time));
-  Vec p2 = Vec_add(l2->p2, Vec_multiply(velocity, time));
+  Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
+  Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
 
-  if (pointInParallelogram(l1->p1, l2->p1, l2->p2, p1, p2) ||
-    pointInParallelogram(l1->p2, l2->p1, l2->p2, p1, p2)) {
+  if (pointInParallelogram(l1p1, l2p1, l2p2, p1, p2) ||
+    pointInParallelogram(l1p2, l2p1, l2p2, p1, p2)) {
     return true;
   }
-
-  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
+  double dir123 = direction(l1p1, l1p2, p1);
+  if (intersectLines(l1p1, l1p2, l2p1, l2p2, direction(l1p2,l1p2,l2p1))) {
     return true;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
+  if (intersectLines(l1p1, l1p2, p1, p2, dir123)) {
     return true;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
+  if (intersectLines(l1p1, l1p2, p1, l2p1, dir123)) {
     return true;
   }
 
@@ -125,19 +133,13 @@ inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
 }
 
 // Check if two lines intersect.
-inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
+inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4, double d3) {
   // Relative orientation
   double d1 = direction(p3, p4, p1);
   double d2 = direction(p3, p4, p2);
-  double d3 = direction(p1, p2, p3);
+  // double d3 = direction(p1, p2, p3);
   double d4 = direction(p1, p2, p4);
 
-  // // If (p1, p2) and (p3, p4) straddle each other, the line segments must
-  // // intersect.
-  // if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
-  //     && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-  //   return true;
-  // }
   if (d1 * d2 < 0 && d3 * d4 < 0) {
     return true;
   }
