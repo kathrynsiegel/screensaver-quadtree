@@ -13,7 +13,8 @@
 
 #include <cilk/reducer_opadd.h>
 
-#define MAX_LINES_PER_NODE 100
+#define MAX_LINES_PER_NODE 150 // Determined from testing increments of 5 from 100 - 170
+#define MAX_DEPTH 3
 
 // need to forward reference due to circularity of these structs
 typedef struct CollisionWorld CollisionWorld;

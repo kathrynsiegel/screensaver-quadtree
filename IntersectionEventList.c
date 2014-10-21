@@ -24,7 +24,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <cilk/reducer.h>
 
 int IntersectionEventNode_compareData(IntersectionEventNode* node1,
                                       IntersectionEventNode* node2) {

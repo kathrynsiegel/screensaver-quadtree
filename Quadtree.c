@@ -32,6 +32,7 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   if (parent != NULL){
     quadtree->parent = parent;
     quadtree->depth = quadtree->parent->depth+1;
+    //printf("depth: %d\n",quadtree->depth);
   } else {
     quadtree->parent = NULL;
     quadtree->depth = 0;
@@ -65,11 +66,12 @@ void Quadtree_delete(Quadtree* quadtree){
 
 void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
-    quadtree->isLeaf = !shouldDivideTree(quadtree);
-    if (!(quadtree->isLeaf)){
-      quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
-      divideTree(quadtree);
-    }
+    shouldDivideTree(quadtree);
+//    quadtree->isLeaf = !shouldDivideTree(quadtree);
+//     if (!(quadtree->isLeaf)){
+//       quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
+//       divideTree(quadtree);
+//     }
   }
   else {
     cilk_for (int i = 0; i < 4; i++) {
@@ -79,16 +81,17 @@ void Quadtree_update(Quadtree* quadtree){
 }
 
 inline bool shouldDivideTree(Quadtree* quadtree){
+  if (quadtree->depth < MAX_DEPTH) return true;
   quadtree->numOfLines = 0;
   int qNum = quadtree->collisionWorld->numOfLines;
   for (int i = 0; i < qNum; i++){
     Line* line = quadtree->collisionWorld->lines[i];
-    
     if (isLineInQuadtree(quadtree, line)){
-      if (!addLine(quadtree, line)){
-        // if the line did not add, then there are too many lines, so divide the quadtree 
-        return true;
-      }
+      // if (!addLine(quadtree, line)){
+//         // if the line did not add, then there are too many lines, so divide the quadtree 
+//         return true;
+//       }
+      addLine(quadtree, line);
     }
   }
   return false;
@@ -135,6 +138,8 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   Vec line_p2 = line->p2;
   Vec line_p3 = line->p3;
   Vec line_p4 = line->p4;
+  
+  
   
   // perform a preliminary check if all of the parallelogram points are off to a side of the box
   if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
