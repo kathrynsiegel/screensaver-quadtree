@@ -120,8 +120,8 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   // make the parallelogram formed by the moving line
   Vec line_p1 = line->p1;
   Vec line_p2 = line->p2;
-  Vec line_p3 = Vec_add(line_p1, Vec_multiply(line->velocity, quadtree->collisionWorld->timeStep));
-  Vec line_p4 = Vec_add(line_p2, Vec_multiply(line->velocity, quadtree->collisionWorld->timeStep));
+  Vec line_p3 = line->p3;
+  Vec line_p4 = line->p4;
   
   // perform a preliminary check if all of the parallelogram points are off to a side of the box
   if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
