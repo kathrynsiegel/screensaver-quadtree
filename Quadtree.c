@@ -46,6 +46,8 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   if (!(quadtree->isLeaf)){
     quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
     divideTree(quadtree);
+  } else {
+    updateLines(quadtree);
   }
   
   return quadtree;
@@ -66,12 +68,7 @@ void Quadtree_delete(Quadtree* quadtree){
 
 void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
-    shouldDivideTree(quadtree);
-//    quadtree->isLeaf = !shouldDivideTree(quadtree);
-//     if (!(quadtree->isLeaf)){
-//       quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
-//       divideTree(quadtree);
-//     }
+    updateLines(quadtree);
   }
   else {
     cilk_for (int i = 0; i < 4; i++) {
@@ -80,21 +77,19 @@ void Quadtree_update(Quadtree* quadtree){
   }
 }
 
-inline bool shouldDivideTree(Quadtree* quadtree){
-  if (quadtree->depth < MAX_DEPTH) return true;
+inline void updateLines(Quadtree* quadtree){
   quadtree->numOfLines = 0;
   int qNum = quadtree->collisionWorld->numOfLines;
   for (int i = 0; i < qNum; i++){
     Line* line = quadtree->collisionWorld->lines[i];
     if (isLineInQuadtree(quadtree, line)){
-      // if (!addLine(quadtree, line)){
-//         // if the line did not add, then there are too many lines, so divide the quadtree 
-//         return true;
-//       }
       addLine(quadtree, line);
     }
   }
-  return false;
+}
+
+inline bool shouldDivideTree(Quadtree* quadtree){
+  return quadtree->depth < MAX_DEPTH;
 }
 
 inline void divideTree(Quadtree* quadtree){

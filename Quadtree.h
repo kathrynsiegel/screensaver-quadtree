@@ -55,8 +55,10 @@ void Quadtree_delete(Quadtree* quadtree);
 
 void Quadtree_update(Quadtree* quadtree);
 
+// Adds all lines in this quadtree
+void updateLines(Quadtree* quadtree);
+
 // Returns true if this tree needs to divide itself into quadrants
-// and adds all lines in this quadtree
 bool shouldDivideTree(Quadtree* quadtree);
 
 // Instantiates and fills the four quadrants of the tree
