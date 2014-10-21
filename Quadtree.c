@@ -249,16 +249,42 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
         // intersect expects compareLines(l1, l2) < 0 to be true.
         // Swap l1 and l2, if necessary.
         if (compareLines(l1, l2) >= 0) {
-          if (fastIntersect(l2, l1, timestep)) {
+          Vec p1;
+          Vec p2;
+          // Get relative velocity.
+          Vec shift;
+          shift.x = l1->shift.x - l2->shift.x;
+          shift.y = l1->shift.y - l2->shift.y;
+
+          // Get the parallelogram.
+          p1.x = l1->p1.x + shift.x;
+          p1.y = l1->p1.y + shift.y;
+  
+          p2.x = l1->p2.x + shift.x;
+          p2.y = l1->p2.y + shift.y;
+          if (fastIntersect(l2, l1, timestep, p1, p2)) {
             IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l2, l1,
-                                    intersect(l2, l1, timestep));
+                                    intersect(l2, l1, timestep, p1, p2));
             REDUCER_VIEW(*numCollisions)++;        
           }
         }
         else {
-          if (fastIntersect(l1, l2, timestep)) {
+          Vec p1;
+          Vec p2;
+          // Get relative velocity.
+          Vec shift;
+          shift.x = l2->shift.x - l1->shift.x;
+          shift.y = l2->shift.y - l1->shift.y;
+
+          // Get the parallelogram.
+          p1.x = l2->p1.x + shift.x;
+          p1.y = l2->p1.y + shift.y;
+  
+          p2.x = l2->p2.x + shift.x;
+          p2.y = l2->p2.y + shift.y;
+          if (fastIntersect(l1, l2, timestep, p1, p2)) {
             IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l1, l2,
-                                    intersect(l1, l2, timestep));
+                                    intersect(l1, l2, timestep, p1, p2));
             REDUCER_VIEW(*numCollisions)++;        
           }
         }

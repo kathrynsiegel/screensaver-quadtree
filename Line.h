@@ -61,6 +61,9 @@ struct Line {
   Vec velocity;
   Vec distancePerTimestep;
   
+  // The line's current velocity * timestep 
+  Vec shift;
+  
   vec_dimension length;
 
   Color color;  // The line's color.
@@ -105,8 +108,9 @@ static inline void velocityWindowToBox(box_dimension *xout, box_dimension *yout,
 }
 
 static inline void updateParallelogram(Line *line, double timeStep){
-  line->p3 = Vec_add(line->p1, Vec_multiply(line->velocity, timeStep));
-  line->p4 = Vec_add(line->p2, Vec_multiply(line->velocity, timeStep));
+  line->shift = Vec_multiply(line->velocity, timeStep);
+  line->p3 = Vec_add(line->p1, line->shift);
+  line->p4 = Vec_add(line->p2, line->shift);
 }
 
 

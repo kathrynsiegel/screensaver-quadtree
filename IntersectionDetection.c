@@ -31,25 +31,12 @@
 #define MAX(a,b) ((a>b)?a:b)
 
 // Detect if lines l1 and l2 will intersect between now and the next time step.
-inline IntersectionType intersect(Line *l1, Line *l2, double time) {
+inline IntersectionType intersect(Line *l1, Line *l2, double time, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
 
   if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
     return ALREADY_INTERSECTED;
   }
-
-  Vec velocity;
-  Vec p1;
-  Vec p2;
-  Vec v1 = Vec_makeFromLine(*l1);
-  Vec v2 = Vec_makeFromLine(*l2);
-
-  // Get relative velocity.
-  velocity = Vec_subtract(l2->velocity, l1->velocity);
-
-  // Get the parallelogram.
-  p1 = Vec_add(l2->p1, Vec_multiply(velocity, time));
-  p2 = Vec_add(l2->p2, Vec_multiply(velocity, time));
 
   if (pointInParallelogram(l1->p1, l2->p1, l2->p2, p1, p2)
       && pointInParallelogram(l1->p2, l2->p1, l2->p2, p1, p2)) {
@@ -67,26 +54,35 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
     num_line_intersections++;
     top_intersected = true;
   }
+  if (num_line_intersections == 2) {
+    return L2_WITH_L1;
+  }
   if (intersectLines(l1->p1, l1->p2, p2, l2->p2)) {
     num_line_intersections++;
     bottom_intersected = true;
   }
 
+  Vec v1 = Vec_makeFromLine(*l1);
+  Vec v2 = Vec_makeFromLine(*l2);
   double angle = Vec_angle(v1, v2);
 
-  if (num_line_intersections == 2 || (top_intersected && angle < 0) || (bottom_intersected && angle > 0)) {
+  if (num_line_intersections == 2) {
     return L2_WITH_L1;
   }
-
-  if (num_line_intersections == 0) {
-    return NO_INTERSECTION;
+  
+  if (top_intersected && angle < 0){
+    return L2_WITH_L1;
+  }
+  if (bottom_intersected && angle > 0){
+    return L2_WITH_L1;
   }
 
   return L1_WITH_L2;
 }
 
-inline IntersectionType fastIntersect(Line *l1, Line *l2, double time) {
+inline IntersectionType fastIntersect(Line *l1, Line *l2, double time, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
+<<<<<<< HEAD
 
   // Get relative velocity.
   Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
