@@ -42,7 +42,7 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   return quadtree;
 }
 
-inline void Quadtree_delete(Quadtree* quadtree){
+void Quadtree_delete(Quadtree* quadtree){
   free(quadtree->lines);
   if (!(quadtree->isLeaf)){
     cilk_spawn Quadtree_delete(quadtree->quadrants[0]);
@@ -55,36 +55,17 @@ inline void Quadtree_delete(Quadtree* quadtree){
   free(quadtree);
 }
 
-bool Quadtree_update(Quadtree* quadtree){
-  bool shouldDestroy = false;
+void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
-    shouldDestroy = shouldDivideTree(quadtree);
+    if (shouldDivideTree(quadtree)) {
+      divideTree(quadtree);
+    }
   }
   else {
-    // add the collisions for all of the leaves of this quadtree
-    // unsigned int numLinesUnder = 0;
-    CILK_C_REDUCER_OPADD(rUnder, int, 0);
-    CILK_C_REGISTER_REDUCER(rUnder);
     cilk_for (int i = 0; i < 4; i++) {
-       shouldDestroy = Quadtree_update(quadtree->quadrants[i]);
-       if (shouldDestroy) {
-         Vec upperLeft = quadtree->quadrants[i]->upperLeft;
-         Vec lowerRight = quadtree->quadrants[i]->lowerRight;
-         Quadtree_delete(quadtree->quadrants[i]);
-         quadtree->quadrants[i] = Quadtree_new(quadtree->collisionWorld, 
-           upperLeft, 
-           lowerRight);
-       }
-       REDUCER_VIEW(rUnder) += getNumLinesUnder(quadtree->quadrants[i]);
-    }
-    unsigned int numLinesUnder = REDUCER_VIEW(rUnder);
-    CILK_C_UNREGISTER_REDUCER(rUnder);
-    if (numLinesUnder <= MAX_LINES_PER_NODE) {
-      shouldDestroy = true;
+       Quadtree_update(quadtree->quadrants[i]);
     }
   }
-  return shouldDestroy;
-
 }
 
 inline bool shouldDivideTree(Quadtree* quadtree){
@@ -118,20 +99,6 @@ inline void divideTree(Quadtree* quadtree){
   quadtree->quadrants[3] = Quadtree_new(quadtree->collisionWorld, 
     centerPoint, 
     quadtree->lowerRight);
-}
-
-unsigned int getNumLinesUnder(Quadtree* quadtree){
-  if (quadtree->isLeaf) {
-    return quadtree->numOfLines;
-  }
-  CILK_C_REDUCER_OPADD(ru, int, 0);
-  CILK_C_REGISTER_REDUCER(ru);
-  cilk_for (int i = 0; i < 4; i++) {
-    REDUCER_VIEW(ru) += getNumLinesUnder(quadtree->quadrants[i]);
-  }
-  unsigned int numLinesUnder = REDUCER_VIEW(ru);
-  CILK_C_UNREGISTER_REDUCER(ru);
-  return numLinesUnder;
 }
 
 inline bool addLine(Quadtree* quadtree, Line* line){
