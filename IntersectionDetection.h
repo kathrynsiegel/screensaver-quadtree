@@ -45,7 +45,7 @@ bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4);
 // bool fastPointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4);
 
 // Check if two lines intersect.
-bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4);
+bool intersectLines(double d1, double d2, double d3, double d4, Vec p1, Vec p2, Vec p3, Vec p4);
 
 // Check the direction of two lines (pi, pj) and (pi, pk).
 double direction(Vec pi, Vec pj, Vec pk);

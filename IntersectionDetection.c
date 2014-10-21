@@ -31,7 +31,10 @@
 inline IntersectionType intersect(Line *l1, Line *l2, double time) {
   assert(compareLines(l1, l2) < 0);
 
-  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
+  if (intersectLines(direction(l2->p1, l2->p2, l1->p1),
+                    direction(l2->p1, l2->p2, l1->p2),
+                    direction(l1->p2, l1->p2, l2->p1),
+                    direction(l1->p1, l1->p2, l2->p2),l1->p1, l1->p2, l2->p1, l2->p2)) {
     return ALREADY_INTERSECTED;
   }
 
@@ -57,14 +60,22 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time) {
   bool top_intersected = false;
   bool bottom_intersected = false;
   
-  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
+  if (intersectLines(direction(p1,p2,l1->p1),
+                    direction(p1,p2,l1->p2), direction(l1->p1,l1->p2, p1),
+                    direction(l1->p1, l1->p2, p2), l1->p1, l1->p2, p1, p2)) {
     num_line_intersections++;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
+  if (intersectLines(direction(p1,l2->p1,l1->p1),
+                    direction(p1,l2->p1,l1->p2),
+                    direction(l1->p2, l1->p2, p1),
+                    direction(l1->p1, l1->p2, l2->p1),l1->p1, l1->p2, p1, l2->p1)) {
     num_line_intersections++;
     top_intersected = true;
   }
-  if (intersectLines(l1->p1, l1->p2, p2, l2->p2)) {
+  if (intersectLines(direction(p2,l2->p2,l1->p1),
+                    direction(p2,l2->p2,l1->p1),
+                    direction(l1->p1,l1->p2,p2),
+                    direction(l1->p1,l1->p2,l2->p2),l1->p1, l1->p2, p2, l2->p2)) {
     num_line_intersections++;
     bottom_intersected = true;
   }
@@ -97,13 +108,22 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, double time) {
     return true;
   }
 
-  if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
+  if (intersectLines(direction(l2->p1,l2->p2,l1->p1),
+                    direction(l2->p1,l2->p2,l1->p2),
+                    direction(l1->p1,l1->p2,l2->p1),
+                    direction(l1->p1,l1->p2,l2->p2),l1->p1, l1->p2, l2->p1, l2->p2)) {
     return true;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, p2)) {
+  if (intersectLines(direction(p1,p2,l1->p1),
+                    direction(p1,p2,l1->p2),
+                    direction(l1->p1,l1->p2,p1),
+                    direction(l1->p1,l1->p2,p2),l1->p1, l1->p2, p1, p2)) {
     return true;
   }
-  if (intersectLines(l1->p1, l1->p2, p1, l2->p1)) {
+  if (intersectLines(direction(p1,l2->p1,l1->p1),
+                    direction(p1,l2->p1,l1->p2),
+                    direction(l1->p1,l1->p2,p1),
+                    direction(l1->p1,l1->p2,l2->p1),l1->p1, l1->p2, p1, l2->p1)) {
     return true;
   }
 
@@ -125,22 +145,9 @@ inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
 }
 
 // Check if two lines intersect.
-inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
-  // Relative orientation
-  double d1 = direction(p3, p4, p1);
-  double d2 = direction(p3, p4, p2);
-  double d3 = direction(p1, p2, p3);
-  double d4 = direction(p1, p2, p4);
-
-  // // If (p1, p2) and (p3, p4) straddle each other, the line segments must
-  // // intersect.
-  // if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
-  //     && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-  //   return true;
-  // }
-  if (d1 * d2 < 0 && d3 * d4 < 0) {
-    return true;
-  }
+bool inline intersectLines(double d1, double d2, double d3, double d4, Vec p1, Vec p2, Vec p3, Vec p4) {
+  // If (p1, p2) and (p3, p4) straddle each other, the line segments must
+  // intersect.
   if (d1 == 0 && onSegment(p3, p4, p1)) {
     return true;
   }
@@ -151,6 +158,9 @@ inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
     return true;
   }
   if (d4 == 0 && onSegment(p1, p2, p4)) {
+    return true;
+  }
+  if ((d1 * d2 < 0) && (d3 * d4 < 0)) {
     return true;
   }
   return false;

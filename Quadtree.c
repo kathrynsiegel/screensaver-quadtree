@@ -184,29 +184,56 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   }
   
   //also check all the lines in the case that no points are inside the other shape
-  if (intersectLines(box_p1, box_p2, line_p1, line_p2)){
+  // double d1 = direction(p3, p4, p1);
+  // double d2 = direction(p3, p4, p2);
+  // double d3 = direction(p1, p2, p3);
+  // double d4 = direction(p1, p2, p4);
+  double l1l2b1 = direction(line_p1, line_p2, box_p1);
+  double l1l2b2 = direction(line_p1, line_p2, box_p2);
+  double b1b2l1 = direction(box_p1, box_p2, line_p1);
+  double b1b2p2 = direction(box_p1, box_p2, line_p2);
+  double l1l2b3 = direction(line_p1, line_p2, box_p3);
+  double b1b3l1 = direction(box_p1, box_p3, line_p1);
+  double b1b3l2 = direction(box_p1, box_p3, line_p2);
+  double l1l2b4 = direction(line_p1, line_p2, box_p4);
+  double b2b4l1 = direction(box_p2, box_p4, line_p1);
+  double b2b4l2 = direction(box_p2, box_p4, line_p2);
+  double b3b4l1 = direction(box_p3, box_p4, line_p1);
+  double b3b4l2 = direction(box_p3, box_p4, line_p2);
+  double l1l3b1 = direction(line_p1, line_p3, box_p1);
+  double l1l3b2 = direction(line_p1, line_p3, box_p2);
+  double b1b2l3 = direction(box_p1, box_p2, line_p3);
+  double l1l3b3 = direction(line_p1, line_p3, box_p3);
+  double b1b3l3 = direction(box_p1, box_p3, line_p3);
+  double l1l3b4 = direction(line_p1, line_p3, box_p4);
+  double b2b4l3 = direction(box_p2, box_p4, line_p3);
+  double b3b4l3 = direction(box_p3, box_p4, line_p3);
+
+// direction(i,j,k);
+// (pk.x - pi.x)*(pj.y - pi.y)-(pk.y - pi.y)*(pj.x - pi.x)
+  if (intersectLines(l1l2b1, l1l2b2, b1b2l1, b1b2p2, box_p1, box_p2, line_p1, line_p2)){
     return true;
   }
-  if (intersectLines(box_p1, box_p3, line_p1, line_p2)){
+  if (intersectLines(l1l2b1, l1l2b3, b1b3l1, b1b3l2, box_p1, box_p3, line_p1, line_p2)){
     return true;
   }
-  if (intersectLines(box_p2, box_p4, line_p1, line_p2)){
+  if (intersectLines(l1l2b2, l1l2b4, b2b4l1, b2b4l2, box_p2, box_p4, line_p1, line_p2)){
     return true;
   }
-  if (intersectLines(box_p3, box_p4, line_p1, line_p2)){
+  if (intersectLines(l1l2b3, l1l2b4, b3b4l1, b3b4l2, box_p3, box_p4, line_p1, line_p2)){
     return true;
   }
   
-  if (intersectLines(box_p1, box_p2, line_p1, line_p3)){
+  if (intersectLines(l1l3b1, l1l3b2, b1b2l1, b1b2l3, box_p1, box_p2, line_p1, line_p3)){
     return true;
   }
-  if (intersectLines(box_p1, box_p3, line_p1, line_p3)){
+  if (intersectLines(l1l3b1, l1l3b3, b1b3l1, b1b3l3, box_p1, box_p3, line_p1, line_p3)){
     return true;
   }
-  if (intersectLines(box_p2, box_p4, line_p1, line_p3)){
+  if (intersectLines(l1l3b2, l1l3b4, b2b4l1, b2b4l3, box_p2, box_p4, line_p1, line_p3)){
     return true;
   }
-  if (intersectLines(box_p3, box_p4, line_p1, line_p3)){
+  if (intersectLines(l1l3b3, l1l3b4, b3b4l1, b3b4l3, box_p3, box_p4, line_p1, line_p3)){
     return true;
   }
 
