@@ -50,7 +50,7 @@ CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   collisionWorld->timeStep = 0.5;
   collisionWorld->lines = malloc(capacity * sizeof(Line*));
   collisionWorld->numOfLines = 0;
-  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), NULL);
   
   return collisionWorld;
 }
@@ -79,7 +79,7 @@ void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
   collisionWorld->numOfLines++;
   // recreate the quadtree (this setup is called before the timed portion)
   Quadtree_delete(collisionWorld->quadtree);
-  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX));
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), NULL);
 }
 
 Line* CollisionWorld_getLine(CollisionWorld* collisionWorld,
@@ -149,6 +149,12 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
 }
 
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
+  
+//  IntersectionEventList intersectionEventList = IntersectionEventList_make();
+//  Quadtree_update(collisionWorld->quadtree);
+//   
+//  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
+  
   IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
   intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
   /* initial value */ (IntersectionEventList) { .head = NULL, .tail = NULL });
@@ -202,6 +208,17 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 
   collisionWorld->numLineLineCollisions += numCollisions;
 
+  // Call the collision solver for each intersection event.
+//   IntersectionEventNode* curNode = intersectionEventList.head;
+// 
+//   while (curNode != NULL) {
+//     CollisionWorld_collisionSolver(collisionWorld, curNode->l1, curNode->l2,
+//                                    curNode->intersectionType);
+//     curNode = curNode->next;
+//   }
+
+  //IntersectionEventList_deleteNodes(&intersectionEventList);
+  
   CILK_C_UNREGISTER_REDUCER(intersectionEventListReducer);
 }
 

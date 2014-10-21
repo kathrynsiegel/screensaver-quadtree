@@ -29,6 +29,10 @@ typedef struct Quadtree {
   
   // The lower right corner of the Quadtree node
   Vec lowerRight;
+  
+  Quadtree* parent;
+  
+  unsigned int depth;
 
   // Array containing all of the lines that are part of this level of the Quadtree
   // This array is only comprehensive if the node is a leaf
@@ -44,7 +48,7 @@ typedef struct Quadtree {
 
 
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight);
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight, Quadtree* parent);
 
 void Quadtree_delete(Quadtree* quadtree);
 

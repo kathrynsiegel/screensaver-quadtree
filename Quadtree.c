@@ -19,7 +19,7 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
-Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight) {
+Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight, Quadtree* parent) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
   if (quadtree == NULL) {
     return NULL;
@@ -28,6 +28,14 @@ Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerR
   quadtree->collisionWorld = collisionWorld;
   quadtree->upperLeft = upperLeft;
   quadtree->lowerRight = lowerRight;
+  
+  if (parent != NULL){
+    quadtree->parent = parent;
+    quadtree->depth = quadtree->parent->depth+1;
+  } else {
+    quadtree->parent = NULL;
+    quadtree->depth = 0;
+  }
   
   quadtree->numOfLines = 0;
   
@@ -88,24 +96,29 @@ inline bool shouldDivideTree(Quadtree* quadtree){
 
 inline void divideTree(Quadtree* quadtree){
   // break the tree up into 4 quadrants
-  Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);;
+  Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);
   quadtree->quadrants[0] = Quadtree_new(quadtree->collisionWorld, 
     quadtree->upperLeft, 
-    centerPoint);
+    centerPoint,
+    quadtree);
   quadtree->quadrants[1] = Quadtree_new(quadtree->collisionWorld, 
     Vec_make(centerPoint.x, quadtree->upperLeft.y), 
-    Vec_make(quadtree->lowerRight.x, centerPoint.y));
+    Vec_make(quadtree->lowerRight.x, centerPoint.y),
+    quadtree);
   quadtree->quadrants[2] = Quadtree_new(quadtree->collisionWorld, 
     Vec_make(quadtree->upperLeft.x, centerPoint.y), 
-    Vec_make(centerPoint.x, quadtree->lowerRight.y));
+    Vec_make(centerPoint.x, quadtree->lowerRight.y),
+    quadtree);
   quadtree->quadrants[3] = Quadtree_new(quadtree->collisionWorld, 
     centerPoint, 
-    quadtree->lowerRight);
+    quadtree->lowerRight,
+    quadtree);
 }
 
 inline bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
+    quadtree->numOfLines = 0;
     return false;
   }
   quadtree->lines[quadtree->numOfLines-1] = line;
@@ -209,7 +222,7 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
       Line *l1 = quadtree->lines[i];
 
 
-      cilk_for (int j = i+1; j < quadtree->numOfLines; j++) {
+      for (int j = i+1; j < quadtree->numOfLines; j++) {
         Line *l2 = quadtree->lines[j];
 
         // intersect expects compareLines(l1, l2) < 0 to be true.
