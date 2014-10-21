@@ -134,10 +134,13 @@ inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
   double d3 = direction(p1, p2, p3);
   double d4 = direction(p1, p2, p4);
 
-  // If (p1, p2) and (p3, p4) straddle each other, the line segments must
-  // intersect.
-  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
-      && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+  // // If (p1, p2) and (p3, p4) straddle each other, the line segments must
+  // // intersect.
+  // if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
+  //     && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+  //   return true;
+  // }
+  if (d1 * d2 < 0 && d3 * d4 < 0) {
     return true;
   }
   if (d1 == 0 && onSegment(p3, p4, p1)) {
