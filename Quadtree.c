@@ -5,54 +5,61 @@
  **/
  
 #include "Quadtree.h"
-
 #include <stdlib.h>
 #include <stdio.h>
-
 #include "CollisionWorld.h"
 #include "Line.h"
 #include "Vec.h"
 #include "IntersectionEventList.h"
 #include "IntersectionDetection.h"
-
 #include <cilk/cilk.h>
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
+///////////////////////////////////////////////////////////
+// Create the quadtree.
+//
+// collisionWorld -> the collision world in which the quadtree is created
+// upperLeft -> the upper left point of the quadtree
+// lowerRight -> the lower right point of the quadtree
+// parent -> the parent quadtree node of this quadtree node
 Quadtree* Quadtree_new(CollisionWorld* collisionWorld, Vec upperLeft, Vec lowerRight, Quadtree* parent) {
   Quadtree* quadtree = malloc(sizeof(Quadtree));
   if (quadtree == NULL) {
     return NULL;
   }
-
   quadtree->collisionWorld = collisionWorld;
   quadtree->upperLeft = upperLeft;
   quadtree->lowerRight = lowerRight;
-  
+
+  // set the parent
   if (parent != NULL){
     quadtree->parent = parent;
     quadtree->depth = quadtree->parent->depth+1;
-    //printf("depth: %d\n",quadtree->depth);
   } else {
     quadtree->parent = NULL;
     quadtree->depth = 0;
   }
-  
+
+  // allocate the line array
   quadtree->numOfLines = 0;
-  
   quadtree->lines = malloc(MAX_LINES_PER_NODE * sizeof(Line*));
-  
   quadtree->isLeaf = !shouldDivideTree(quadtree);
+
+  // if the quadtree is not a leaf, then recursively create four
+  // new quadtree nodes
   if (!(quadtree->isLeaf)){
     quadtree->quadrants = malloc(4 * sizeof(Quadtree*));
     divideTree(quadtree);
   } else {
     updateLines(quadtree);
   }
-  
   return quadtree;
 }
 
+///////////////////////////////////////////////////////////
+// Delete the quadtree and deallocate.
+// We parallelize the deletion
 void Quadtree_delete(Quadtree* quadtree){
   free(quadtree->lines);
   if (!(quadtree->isLeaf)){
@@ -66,6 +73,8 @@ void Quadtree_delete(Quadtree* quadtree){
   free(quadtree);
 }
 
+///////////////////////////////////////////////////////////
+// 
 void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
     updateLines(quadtree);
@@ -77,6 +86,8 @@ void Quadtree_update(Quadtree* quadtree){
   }
 }
 
+///////////////////////////////////////////////////////////
+// 
 inline void updateLines(Quadtree* quadtree){
   quadtree->numOfLines = 0;
   int qNum = quadtree->collisionWorld->numOfLines;
@@ -88,10 +99,14 @@ inline void updateLines(Quadtree* quadtree){
   }
 }
 
+///////////////////////////////////////////////////////////
+// 
 inline bool shouldDivideTree(Quadtree* quadtree){
   return quadtree->depth < MAX_DEPTH;
 }
 
+///////////////////////////////////////////////////////////
+// 
 inline void divideTree(Quadtree* quadtree){
   // break the tree up into 4 quadrants
   Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);
@@ -113,6 +128,8 @@ inline void divideTree(Quadtree* quadtree){
     quadtree);
 }
 
+///////////////////////////////////////////////////////////
+// 
 inline bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
@@ -123,6 +140,8 @@ inline bool addLine(Quadtree* quadtree, Line* line){
   return true;
 }
 
+///////////////////////////////////////////////////////////
+// 
 inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   // make the half of the bounding box of the quadtree
   Vec box_p1 = quadtree->upperLeft;
@@ -198,6 +217,8 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   return false;
 }
 
+///////////////////////////////////////////////////////////
+// 
 void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* intersectionEventList, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisions){
   if (quadtree->isLeaf){
     // iterate through all lines in the quadtree and detect collisions
@@ -209,27 +230,6 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
 
       for (int j = i+1; j < quadtree->numOfLines; j++) {
         Line *l2 = quadtree->lines[j];
-
-        // if (compareLines(l1, l2) >= 0) {
-        //   if (fastIntersect(l2, l1, timestep)) {
-        //     IntersectionType type = intersect(l2, l1, timestep);
-        //     if (type != NO_INTERSECTION) {
-        //       IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l2, l1,
-        //                             type);
-        //       REDUCER_VIEW(*numCollisions)++;
-        //     }      
-        //   }
-        // }
-        // else {
-        //   if (fastIntersect(l1, l2, timestep)) {
-        //     IntersectionType type = intersect(l1, l2, timestep);
-        //     if (type != NO_INTERSECTION) {
-        //       IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l1, l2,
-        //                             intersect(l1, l2, timestep));
-        //       REDUCER_VIEW(*numCollisions)++;
-        //     }       
-        //   }
-        // }
 
         // intersect expects compareLines(l1, l2) < 0 to be true.
         // Swap l1 and l2, if necessary.

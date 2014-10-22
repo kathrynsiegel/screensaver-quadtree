@@ -37,6 +37,8 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
+///////////////////////////////////////////////////////////////////////
+// Create a new collision world
 CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   assert(capacity > 0);
 
@@ -45,16 +47,18 @@ CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
     return NULL;
   }
 
+  // set variables
   collisionWorld->numLineWallCollisions = 0;
   collisionWorld->numLineLineCollisions = 0;
   collisionWorld->timeStep = 0.5;
   collisionWorld->lines = malloc(capacity * sizeof(Line*));
   collisionWorld->numOfLines = 0;
-  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), NULL);
-  
+  collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), NULL); 
   return collisionWorld;
 }
 
+///////////////////////////////////////////////////////////////////////
+// Delete collision world and deallocate.
 void CollisionWorld_delete(CollisionWorld* collisionWorld) {
   for (int i = 0; i < collisionWorld->numOfLines; i++) {
     free(collisionWorld->lines[i]);
@@ -64,10 +68,14 @@ void CollisionWorld_delete(CollisionWorld* collisionWorld) {
   free(collisionWorld);
 }
 
+///////////////////////////////////////////////////////////////////////
+// Get the number of lines in the collision world.
 unsigned int CollisionWorld_getNumOfLines(CollisionWorld* collisionWorld) {
   return collisionWorld->numOfLines;
 }
 
+///////////////////////////////////////////////////////////////////////
+// Add a line to the collision world
 void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
   // precalculate the length of the line
   line->length = Vec_length(Vec_subtract(line->p1, line->p2));
@@ -83,6 +91,8 @@ void CollisionWorld_addLine(CollisionWorld* collisionWorld, Line *line) {
   collisionWorld->quadtree = Quadtree_new(collisionWorld, Vec_make(BOX_XMIN,BOX_YMIN), Vec_make(BOX_XMAX,BOX_YMAX), NULL);
 }
 
+///////////////////////////////////////////////////////////////////////
+// Get a line from the collision world
 Line* CollisionWorld_getLine(CollisionWorld* collisionWorld,
                              const unsigned int index) {
   if (index >= collisionWorld->numOfLines) {
@@ -91,6 +101,8 @@ Line* CollisionWorld_getLine(CollisionWorld* collisionWorld,
   return collisionWorld->lines[index];
 }
 
+///////////////////////////////////////////////////////////////////////
+// Update the lines in the collision world
 void CollisionWorld_updateLines(CollisionWorld* collisionWorld) {
   CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
   CILK_C_REGISTER_REDUCER(numCollisionsReducer);
@@ -100,6 +112,8 @@ void CollisionWorld_updateLines(CollisionWorld* collisionWorld) {
   CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
 }
 
+///////////////////////////////////////////////////////////////////////
+// Update the positions of all of the lines in the collision world
 void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
   double t = collisionWorld->timeStep;
   cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
@@ -109,6 +123,8 @@ void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
   }
 }
 
+///////////////////////////////////////////////////////////////////////
+// Calculate change in velocity when a line collides with a wall
 void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisionsReducer) {
   REDUCER_VIEW(*numCollisionsReducer) = 0;
   cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
@@ -139,34 +155,19 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld, CILK_C_RED
     updateParallelogram(line, collisionWorld->timeStep);
   }
   collisionWorld->numLineWallCollisions += REDUCER_VIEW(*numCollisionsReducer);
-  // CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
 }
 
+///////////////////////////////////////////////////////////////////////
+// Detect intersections between lines
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisionsReducer) {
-  
-//  IntersectionEventList intersectionEventList = IntersectionEventList_make();
-//  Quadtree_update(collisionWorld->quadtree);
-//   
-//  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
-  
+  // Use a reducer to detect intersections
   IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
   intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
   /* initial value */ (IntersectionEventList) { .head = NULL, .tail = NULL });
-
   CILK_C_REGISTER_REDUCER(intersectionEventListReducer);
-  
-  Quadtree_update(collisionWorld->quadtree);
-  
-//   CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
-//   CILK_C_REGISTER_REDUCER(numCollisionsReducer);
-  
+  Quadtree_update(collisionWorld->quadtree); 
   detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer, numCollisionsReducer);
-  
   int numCollisions = REDUCER_VIEW(*numCollisionsReducer);
-  
- //  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
-  
-  
   IntersectionEventList intersectionEventList = REDUCER_VIEW(intersectionEventListReducer);
   
   // Sort the intersection event list.
@@ -200,19 +201,8 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld, CILK_C_RE
     startNode = startNode->next;
   }
 
+  // update the number of line-to-line collisions
   collisionWorld->numLineLineCollisions += numCollisions;
-
-  // Call the collision solver for each intersection event.
-//   IntersectionEventNode* curNode = intersectionEventList.head;
-// 
-//   while (curNode != NULL) {
-//     CollisionWorld_collisionSolver(collisionWorld, curNode->l1, curNode->l2,
-//                                    curNode->intersectionType);
-//     curNode = curNode->next;
-//   }
-
-  //IntersectionEventList_deleteNodes(&intersectionEventList);
-  
   CILK_C_UNREGISTER_REDUCER(intersectionEventListReducer);
 }
 

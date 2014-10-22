@@ -185,6 +185,7 @@ inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
   double l2_y_min = MIN(p3.y,p4.y);
   double l2_y_max = MAX(p3.y,p4.y);
   
+  // Initial bounding box check
   if (l1_x_max < l2_x_min) {
     return false;
   }
@@ -197,18 +198,15 @@ inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
   if (l1_y_min > l2_y_max) {
     return false;
   }
+
   // Relative orientation
   double d1 = direction(p3, p4, p1);
   double d2 = direction(p3, p4, p2);
   double d3 = direction(p1, p2, p3);
   double d4 = direction(p1, p2, p4);
 
-  // // If (p1, p2) and (p3, p4) straddle each other, the line segments must
-  // // intersect.
-  // if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
-  //     && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-  //   return true;
-  // }
+  // If (p1, p2) and (p3, p4) straddle each other, the line segments must
+  // intersect.
   if (d1 * d2 < 0 && d3 * d4 < 0) {
     return true;
   }
@@ -227,6 +225,7 @@ inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
   return false;
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 // Obtain the intersection point for two intersecting line segments.
 inline Vec getIntersectionPoint(Vec p1, Vec p2, Vec p3, Vec p4) {
   double u;
@@ -237,11 +236,13 @@ inline Vec getIntersectionPoint(Vec p1, Vec p2, Vec p3, Vec p4) {
   return Vec_add(p1, Vec_multiply(Vec_subtract(p2, p1), u));
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 // Check the direction of two lines (pi, pj) and (pi, pk).
 inline double direction(Vec pi, Vec pj, Vec pk) {
   return crossProduct(pk.x - pi.x, pk.y - pi.y, pj.x - pi.x, pj.y - pi.y);
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 // Check if a point pk is in the line segment (pi, pj).
 // pi, pj, and pk must be collinear.
 inline bool onSegment(Vec pi, Vec pj, Vec pk) {
@@ -252,6 +253,7 @@ inline bool onSegment(Vec pi, Vec pj, Vec pk) {
   return false;
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 // Calculate the cross product.
 inline double crossProduct(double x1, double y1, double x2, double y2) {
   return x1 * y2 - x2 * y1;

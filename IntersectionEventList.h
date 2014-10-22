@@ -73,6 +73,7 @@ void IntersectionEventList_appendEventList(IntersectionEventList* intersectionEv
 void IntersectionEventList_deleteNodes(
     IntersectionEventList* intersectionEventList);
     
+// Concatenates two intersection event lists
 void merge_lists(IntersectionEventList* list1, IntersectionEventList* list2);
 
 void intersection_event_list_reduce(void* key, void* left, void* right);
