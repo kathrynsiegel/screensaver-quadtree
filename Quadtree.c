@@ -74,7 +74,7 @@ void Quadtree_delete(Quadtree* quadtree){
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Update the quadtree--we parallelize this update.
 void Quadtree_update(Quadtree* quadtree){
   if (quadtree->isLeaf){
     updateLines(quadtree);
@@ -87,7 +87,7 @@ void Quadtree_update(Quadtree* quadtree){
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Update all of the line positions of the lines in the quadtree.
 inline void updateLines(Quadtree* quadtree){
   quadtree->numOfLines = 0;
   int qNum = quadtree->collisionWorld->numOfLines;
@@ -100,13 +100,14 @@ inline void updateLines(Quadtree* quadtree){
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Determine whether we should divide the quadtree into four
+// separate quadtree nodes.
 inline bool shouldDivideTree(Quadtree* quadtree){
   return quadtree->depth < MAX_DEPTH;
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Divides the given quadtree into four separate quadtree nodes.
 inline void divideTree(Quadtree* quadtree){
   // break the tree up into 4 quadrants
   Vec centerPoint = Vec_divide(Vec_add(quadtree->lowerRight,quadtree->upperLeft),2);
@@ -129,7 +130,7 @@ inline void divideTree(Quadtree* quadtree){
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Adds a line to a given quadtree.
 inline bool addLine(Quadtree* quadtree, Line* line){
   quadtree->numOfLines++;
   if (quadtree->numOfLines > MAX_LINES_PER_NODE){
@@ -141,7 +142,10 @@ inline bool addLine(Quadtree* quadtree, Line* line){
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Checks whether a line is in the quadtree. 
+// We treat the line as a parallelogram and the quadtree
+// as a box, and check whether the parallelogram and the quadtree
+// box overlap.
 inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   // make the half of the bounding box of the quadtree
   Vec box_p1 = quadtree->upperLeft;
@@ -183,7 +187,7 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
     return true;
   }
   
-    // finish the bounding box once we know we need to check all corners
+  // finish the bounding box once we know we need to check all corners
   Vec box_p3 = Vec_make(box_p1.x, box_p4.y);
   Vec box_p2 = Vec_make(box_p4.x, box_p1.y);
   
@@ -218,7 +222,7 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
 }
 
 ///////////////////////////////////////////////////////////
-// 
+// Use reducers to detect whether
 void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* intersectionEventList, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisions){
   if (quadtree->isLeaf){
     // iterate through all lines in the quadtree and detect collisions
