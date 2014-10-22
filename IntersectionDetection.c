@@ -133,6 +133,7 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, Vec p1, Vec p2) {
 
 // Check if a point is in the parallelogram.
 inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
+  
   double d1 = direction(p1, p2, point);
   double d2 = direction(p3, p4, point);
   double d3 = direction(p1, p3, point);
@@ -151,6 +152,28 @@ inline bool pointInSquare(Vec point, Vec p1, Vec p4) {
 
 // Check if two lines intersect.
 inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
+  double l1_x_min = MIN(p1.x,p2.x);
+  double l1_x_max = MAX(p1.x,p2.x);
+  double l1_y_min = MIN(p1.y,p2.y);
+  double l1_y_max = MAX(p1.y,p2.y);
+  
+  double l2_x_min = MIN(p3.x,p4.x);
+  double l2_x_max = MAX(p3.x,p4.x);
+  double l2_y_min = MIN(p3.y,p4.y);
+  double l2_y_max = MAX(p3.y,p4.y);
+  
+  if (l1_x_max < l2_x_min) {
+    return false;
+  }
+  if (l1_x_min > l2_x_max) {
+    return false;
+  }
+  if (l1_y_max < l2_y_min) {
+    return false;
+  }
+  if (l1_y_min > l2_y_max) {
+    return false;
+  }
   // Relative orientation
   double d1 = direction(p3, p4, p1);
   double d2 = direction(p3, p4, p2);
