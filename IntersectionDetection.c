@@ -95,23 +95,23 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, double time, Vec p1, V
   // Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
   // Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
 
-  // double par_x_min = MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x));
-  // double par_x_max = MAX(MAX(l2p1.x,l2p2.x),MAX(p1.x,p2.x));
-  // double par_y_min = MIN(MIN(l2p1.y,l2p2.y),MIN(p1.y,p2.y));
-  // double par_y_max = MAX(MAX(l2p1.y,l2p2.y),MAX(p1.y,p2.y));
+  double par_x_min = MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x));
+  double par_x_max = MAX(MAX(l2p1.x,l2p2.x),MAX(p1.x,p2.x));
+  double par_y_min = MIN(MIN(l2p1.y,l2p2.y),MIN(p1.y,p2.y));
+  double par_y_max = MAX(MAX(l2p1.y,l2p2.y),MAX(p1.y,p2.y));
 
-  // if (MAX(l1p1.x,l1p2.x) < par_x_min) {
-  //   return false;
-  // }
-  // if (MIN(l1p1.x,l1p2.x) > par_x_max) {
-  //   return false;
-  // }
-  // if (MAX(l1p1.y,l1p2.y) < par_y_min) {
-  //   return false;
-  // }
-  // if (MIN(l1p1.y,l1p2.y) > par_y_max) {
-  //   return false;
-  // }
+  if (MAX(l1p1.x,l1p2.x) < par_x_min) {
+    return false;
+  }
+  if (MIN(l1p1.x,l1p2.x) > par_x_max) {
+    return false;
+  }
+  if (MAX(l1p1.y,l1p2.y) < par_y_min) {
+    return false;
+  }
+  if (MIN(l1p1.y,l1p2.y) > par_y_max) {
+    return false;
+  }
 
   if (pointInParallelogram(l1p1, l2p1, l2p2, p1, p2)) {
     return true;
@@ -142,6 +142,11 @@ inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
     return true;
   }
   return false;
+}
+
+// Check if a point is in a square.
+inline bool pointInSquare(Vec point, Vec p1, Vec p4) {
+  return (point.x >= p1.x && point.x <= p4.x && point.y <=  p4.y && point.y >= p1.y);
 }
 
 // Check if two lines intersect.

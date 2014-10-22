@@ -16,6 +16,11 @@
 #define MAX_LINES_PER_NODE 150 // Determined from testing increments of 5 from 100 - 170
 #define MAX_DEPTH 3
 
+#define MIN(x,y) (x < y ? x : y)
+#define MIN_4(a,b,c,d) MIN(MIN(a,b), MIN(c,d)) 
+#define MAX(x,y) (x > y ? x : y)
+#define MAX_4(a,b,c,d) MAX(MAX(a,b), MAX(c,d)) 
+
 // need to forward reference due to circularity of these structs
 typedef struct CollisionWorld CollisionWorld;
 typedef struct Quadtree Quadtree;

@@ -134,8 +134,6 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   Vec line_p3 = line->p3;
   Vec line_p4 = line->p4;
   
-  
-  
   // perform a preliminary check if all of the parallelogram points are off to a side of the box
   if (line_p1.x > box_p4.x && line_p2.x > box_p4.x && line_p3.x > box_p4.x && line_p4.x > box_p4.x){
     return false;
@@ -149,39 +147,26 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
   if (line_p1.x < box_p1.x && line_p2.x < box_p1.x && line_p3.x < box_p1.x && line_p4.x < box_p1.x){
     return false;
   }
-  
-  // finish the bounding box once we know we need to check all corners
-  Vec box_p3 = Vec_make(box_p1.x, box_p4.y);
-  Vec box_p2 = Vec_make(box_p4.x, box_p1.y);
-  
+ 
   // check each of the points in the parallelogram 
   // and each of the points in the bounding box
   // need to consider both (parallelogram > bounding box) and (bounding box > parallelogram)
-  if (pointInParallelogram(line_p1, box_p1, box_p2, box_p3, box_p4)) {
+  if (pointInSquare(line_p1, box_p1, box_p4)) {
     return true;
   }
-  if (pointInParallelogram(line_p2, box_p1, box_p2, box_p3, box_p4)) {
+  if (pointInSquare(line_p2, box_p1, box_p4)) {
     return true;
   }
-  if (pointInParallelogram(line_p3, box_p1, box_p2, box_p3, box_p4)) {
+  if (pointInSquare(line_p3, box_p1, box_p4)) {
     return true;
   }
-  if (pointInParallelogram(line_p4, box_p1, box_p2, box_p3, box_p4)) {
+  if (pointInSquare(line_p4, box_p1, box_p4)) {
     return true;
   }
   
-  if (pointInParallelogram(box_p1, line_p1, line_p2, line_p3, line_p4)) {
-    return true;
-  }
-  if (pointInParallelogram(box_p2, line_p1, line_p2, line_p3, line_p4)) {
-    return true;
-  }
-  if (pointInParallelogram(box_p3, line_p1, line_p2, line_p3, line_p4)) {
-    return true;
-  }
-  if (pointInParallelogram(box_p4, line_p1, line_p2, line_p3, line_p4)) {
-    return true;
-  }
+    // finish the bounding box once we know we need to check all corners
+  Vec box_p3 = Vec_make(box_p1.x, box_p4.y);
+  Vec box_p2 = Vec_make(box_p4.x, box_p1.y);
   
   //also check all the lines in the case that no points are inside the other shape
   if (intersectLines(box_p1, box_p2, line_p1, line_p2)){

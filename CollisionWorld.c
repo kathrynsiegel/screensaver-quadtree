@@ -37,9 +37,6 @@
 #include <cilk/reducer.h>
 #include <cilk/reducer_opadd.h>
 
-#define MIN(a,b) ((a<b)?a:b)
-#define MAX(a,b) ((a>b)?a:b)
-
 CollisionWorld* CollisionWorld_new(const unsigned int capacity) {
   assert(capacity > 0);
 
