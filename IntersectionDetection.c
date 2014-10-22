@@ -31,7 +31,7 @@
 #define MAX(a,b) ((a>b)?a:b)
 
 // Detect if lines l1 and l2 will intersect between now and the next time step.
-inline IntersectionType intersect(Line *l1, Line *l2, double time, Vec p1, Vec p2) {
+inline IntersectionType intersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
 
   if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
@@ -80,7 +80,7 @@ inline IntersectionType intersect(Line *l1, Line *l2, double time, Vec p1, Vec p
   return L1_WITH_L2;
 }
 
-inline IntersectionType fastIntersect(Line *l1, Line *l2, double time, Vec p1, Vec p2) {
+inline IntersectionType fastIntersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
   
   // Get relative velocity.

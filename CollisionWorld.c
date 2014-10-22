@@ -92,9 +92,12 @@ Line* CollisionWorld_getLine(CollisionWorld* collisionWorld,
 }
 
 void CollisionWorld_updateLines(CollisionWorld* collisionWorld) {
-  CollisionWorld_detectIntersection(collisionWorld);
+  CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
+  CILK_C_REGISTER_REDUCER(numCollisionsReducer);
+  CollisionWorld_detectIntersection(collisionWorld, &numCollisionsReducer);
   CollisionWorld_updatePosition(collisionWorld);
-  CollisionWorld_lineWallCollision(collisionWorld);
+  CollisionWorld_lineWallCollision(collisionWorld, &numCollisionsReducer);
+  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
 }
 
 void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
@@ -106,41 +109,40 @@ void CollisionWorld_updatePosition(CollisionWorld* collisionWorld) {
   }
 }
 
-void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
-  CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
-  CILK_C_REGISTER_REDUCER(numCollisionsReducer);
+void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisionsReducer) {
+  REDUCER_VIEW(*numCollisionsReducer) = 0;
   cilk_for (int i = 0; i < collisionWorld->numOfLines; i++) {
     Line *line = collisionWorld->lines[i];
 
     // Right side
     if (MAX(line->p1.x,line->p2.x) > BOX_XMAX && (line->velocity.x > 0)) {
       line->velocity.x = -line->velocity.x;
-      REDUCER_VIEW(numCollisionsReducer)++;
+      REDUCER_VIEW(*numCollisionsReducer)++;
     }
     // Left side
     else if (MIN(line->p1.x,line->p2.x) < BOX_XMIN && (line->velocity.x < 0)) {
       line->velocity.x = -line->velocity.x;
-      REDUCER_VIEW(numCollisionsReducer)++;
+      REDUCER_VIEW(*numCollisionsReducer)++;
     }
     // Top side
     else if (MAX(line->p1.y,line->p2.y) > BOX_YMAX && (line->velocity.y > 0)) {
       line->velocity.y = -line->velocity.y;
-      REDUCER_VIEW(numCollisionsReducer)++;
+      REDUCER_VIEW(*numCollisionsReducer)++;
     }
     // Bottom side
     else if (MIN(line->p1.y,line->p2.y) < BOX_YMIN && (line->velocity.y < 0)) {
       line->velocity.y = -line->velocity.y;
-      REDUCER_VIEW(numCollisionsReducer)++;
+      REDUCER_VIEW(*numCollisionsReducer)++;
     }
     
     // precalculate the parallelogram created by final velocity
     updateParallelogram(line, collisionWorld->timeStep);
   }
-  collisionWorld->numLineWallCollisions += REDUCER_VIEW(numCollisionsReducer);
-  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
+  collisionWorld->numLineWallCollisions += REDUCER_VIEW(*numCollisionsReducer);
+  // CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
 }
 
-void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
+void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisionsReducer) {
   
  IntersectionEventList intersectionEventList = IntersectionEventList_make();
 //  Quadtree_update(collisionWorld->quadtree);
@@ -165,6 +167,14 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
   // int numCollisions = REDUCER_VIEW(numCollisionsReducer);
   
   // CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
+//   CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
+//   CILK_C_REGISTER_REDUCER(numCollisionsReducer);
+  
+  // detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer, numCollisionsReducer);
+  
+  // int numCollisions = REDUCER_VIEW(*numCollisionsReducer);
+  
+ //  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
   
   
   // IntersectionEventList intersectionEventList = REDUCER_VIEW(intersectionEventListReducer);

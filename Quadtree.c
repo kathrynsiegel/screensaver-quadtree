@@ -201,7 +201,7 @@ inline bool isLineInQuadtree(Quadtree* quadtree, Line* line){
 void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* intersectionEventList, CILK_C_REDUCER_OPADD_TYPE(int)* numCollisions){
   if (quadtree->isLeaf){
     // iterate through all lines in the quadtree and detect collisions
-    double timestep = quadtree->collisionWorld->timeStep;
+    //double timestep = quadtree->collisionWorld->timeStep;
     
     cilk_for (int i = 0; i < quadtree->numOfLines; i++) {
       Line *l1 = quadtree->lines[i];
@@ -247,9 +247,9 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
   
           p2.x = l1->p2.x + shift.x;
           p2.y = l1->p2.y + shift.y;
-          if (fastIntersect(l2, l1, timestep, p1, p2)) {
+          if (fastIntersect(l2, l1, p1, p2)) {
             IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l2, l1,
-                                    intersect(l2, l1, timestep, p1, p2));
+                                    intersect(l2, l1, p1, p2));
             REDUCER_VIEW(*numCollisions)++;        
           }
         }
@@ -267,9 +267,9 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
   
           p2.x = l2->p2.x + shift.x;
           p2.y = l2->p2.y + shift.y;
-          if (fastIntersect(l1, l2, timestep, p1, p2)) {
+          if (fastIntersect(l1, l2, p1, p2)) {
             IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l1, l2,
-                                    intersect(l1, l2, timestep, p1, p2));
+                                    intersect(l1, l2, p1, p2));
             REDUCER_VIEW(*numCollisions)++;        
           }
         }
