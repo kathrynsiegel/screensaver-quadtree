@@ -142,30 +142,32 @@ void CollisionWorld_lineWallCollision(CollisionWorld* collisionWorld) {
 
 void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
   
-//  IntersectionEventList intersectionEventList = IntersectionEventList_make();
+ IntersectionEventList intersectionEventList = IntersectionEventList_make();
 //  Quadtree_update(collisionWorld->quadtree);
 //   
 //  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
   
-  IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
-  intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
-  /* initial value */ (IntersectionEventList) { .head = NULL, .tail = NULL });
+  // IntersectionEventListReducer intersectionEventListReducer = CILK_C_INIT_REDUCER(/* type */ IntersectionEventList,
+  // intersection_event_list_reduce, intersection_event_list_identity, intersection_event_list_destroy,
+  // /* initial value */ (IntersectionEventList) { .head = NULL, .tail = NULL });
 
-  CILK_C_REGISTER_REDUCER(intersectionEventListReducer);
+  // CILK_C_REGISTER_REDUCER(intersectionEventListReducer);
   
   Quadtree_update(collisionWorld->quadtree);
   
-  CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
-  CILK_C_REGISTER_REDUCER(numCollisionsReducer);
+  // CILK_C_REDUCER_OPADD(numCollisionsReducer, int, 0);
+  // CILK_C_REGISTER_REDUCER(numCollisionsReducer);
   
-  detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer, &numCollisionsReducer);
+  // detectCollisionsReducer(collisionWorld->quadtree, &intersectionEventListReducer, &numCollisionsReducer);
   
-  int numCollisions = REDUCER_VIEW(numCollisionsReducer);
+  int numCollisions = detectCollisions(collisionWorld->quadtree, &intersectionEventList);
+
+  // int numCollisions = REDUCER_VIEW(numCollisionsReducer);
   
-  CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
+  // CILK_C_UNREGISTER_REDUCER(numCollisionsReducer);
   
   
-  IntersectionEventList intersectionEventList = REDUCER_VIEW(intersectionEventListReducer);
+  // IntersectionEventList intersectionEventList = REDUCER_VIEW(intersectionEventListReducer);
   
   // Sort the intersection event list.
   IntersectionEventNode* startNode = intersectionEventList.head;
@@ -211,7 +213,7 @@ void CollisionWorld_detectIntersection(CollisionWorld* collisionWorld) {
 
   //IntersectionEventList_deleteNodes(&intersectionEventList);
   
-  CILK_C_UNREGISTER_REDUCER(intersectionEventListReducer);
+  // CILK_C_UNREGISTER_REDUCER(intersectionEventListReducer);
 }
 
 unsigned int CollisionWorld_getNumLineWallCollisions(

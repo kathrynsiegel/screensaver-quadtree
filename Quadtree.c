@@ -284,76 +284,85 @@ void detectCollisionsReducer(Quadtree* quadtree, IntersectionEventListReducer* i
   }
 }
 
-void detectCollisionsMerge(Quadtree* quadtree, IntersectionEventList* intersectionEventList, unsigned int numCollisions){
+inline unsigned int detectCollisions(Quadtree* quadtree, IntersectionEventList* intersectionEventList){
+  unsigned int numLineLineCollisions = 0;
   if (quadtree->isLeaf){
     // iterate through all lines in the quadtree and detect collisions
-    double timestep = quadtree->collisionWorld->timeStep;
-    
-    cilk_for (int i = 0; i < quadtree->numOfLines; i++) {
-      Line *l1 = quadtree->lines[i];
+    for (int i = 0; i < quadtree->numOfLines; i++) {
+    Line *l1 = quadtree->lines[i];
 
-
-      for (int j = i+1; j < quadtree->numOfLines; j++) {
+      for (int j = i + 1; j < quadtree->numOfLines; j++) {
         Line *l2 = quadtree->lines[j];
 
         // intersect expects compareLines(l1, l2) < 0 to be true.
         // Swap l1 and l2, if necessary.
         if (compareLines(l1, l2) >= 0) {
-          Vec p1;
-          Vec p2;
-          // Get relative velocity.
-          Vec shift;
-          shift.x = l1->shift.x - l2->shift.x;
-          shift.y = l1->shift.y - l2->shift.y;
-
-          // Get the parallelogram.
-          p1.x = l1->p1.x + shift.x;
-          p1.y = l1->p1.y + shift.y;
-  
-          p2.x = l1->p2.x + shift.x;
-          p2.y = l1->p2.y + shift.y;
-          if (fastIntersect(l2, l1, timestep, p1, p2)) {
-            IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l2, l1,
-                                    intersect(l2, l1, timestep, p1, p2));
-            REDUCER_VIEW(*numCollisions)++;        
-          }
+          Line *temp = l1;
+          l1 = l2;
+          l2 = temp;
         }
-        else {
-          Vec p1;
-          Vec p2;
-          // Get relative velocity.
-          Vec shift;
-          shift.x = l2->shift.x - l1->shift.x;
-          shift.y = l2->shift.y - l1->shift.y;
 
-          // Get the parallelogram.
-          p1.x = l2->p1.x + shift.x;
-          p1.y = l2->p1.y + shift.y;
-  
-          p2.x = l2->p2.x + shift.x;
-          p2.y = l2->p2.y + shift.y;
-          if (fastIntersect(l1, l2, timestep, p1, p2)) {
-            IntersectionEventList_appendNode(&REDUCER_VIEW(*intersectionEventList), l1, l2,
-                                    intersect(l1, l2, timestep, p1, p2));
-            REDUCER_VIEW(*numCollisions)++;        
-          }
+        // IntersectionType intersectionType =
+        //     intersect(l1, l2, quadtree->collisionWorld->timeStep);
+        if (fastIntersect(l1, l2, quadtree->collisionWorld->timeStep)) {
+          
+          
+          // IntersectionEventNode* newNode = malloc(sizeof(IntersectionEventNode));
+          // newNode->l1 = l1;
+          // newNode->l2 = l2;
+          
+          // // check to make sure this collision has not been added already
+          
+          // bool alreadyAdded = false;
+          // IntersectionEventNode* curNode = intersectionEventList->head;
+          // IntersectionEventNode* nextNode = NULL;
+          
+          // while (curNode != NULL) {
+          //   nextNode = curNode->next;
+          //   if (IntersectionEventNode_compareData(newNode, curNode) == 0){
+          //     alreadyAdded=true;
+          //   }
+          //   curNode = nextNode;
+          // }
+          
+          // free(newNode);
+          
+          // if (!alreadyAdded){
+            IntersectionEventList_appendNode(intersectionEventList, l1, l2,
+                                    intersect(l1, l2, quadtree->collisionWorld->timeStep));
+            numLineLineCollisions++;
+          // }
+          
         }
       }
     }
   } 
   else {
     // add the collisions for all of the leaves of this quadtree
-    IntersectionEventList* intersectionEventList0 = IntersectionEventList_make();
-    IntersectionEventList* intersectionEventList1 = IntersectionEventList_make();
-    IntersectionEventList* intersectionEventList2 = IntersectionEventList_make();
-    IntersectionEventList* intersectionEventList3 = IntersectionEventList_make(); 
+    // for (int i = 0; i < 4; i++) {
+    //   numLineLineCollisions += detectCollisions(quadtree->quadrants[i], intersectionEventList);
+    // }
 
-    cilk_spawn detectCollisionsMerge(quadtree->quadrants[0], intersectionEventList0);
-    cilk_spawn detectCollisionsMerge(quadtree->quadrants[1], intersectionEventList1);
-    cilk_spawn detectCollisionsMerge(quadtree->quadrants[2], intersectionEventList2);
-    detectCollisionsMerge(quadtree->quadrants[3], intersectionEventList3);
+    IntersectionEventList eventList0 = IntersectionEventList_make();
+    IntersectionEventList eventList1 = IntersectionEventList_make();
+    IntersectionEventList eventList2 = IntersectionEventList_make();
+    IntersectionEventList eventList3 = IntersectionEventList_make();
+    int numLineLineCollisions0 = cilk_spawn detectCollisions(quadtree->quadrants[0], &eventList0);
+    int numLineLineCollisions1 = cilk_spawn detectCollisions(quadtree->quadrants[1], &eventList1);
+    int numLineLineCollisions2 = cilk_spawn detectCollisions(quadtree->quadrants[2], &eventList2);
+    numLineLineCollisions += detectCollisions(quadtree->quadrants[3], &eventList3);
     cilk_sync;
+    numLineLineCollisions += numLineLineCollisions0;
+    numLineLineCollisions += numLineLineCollisions1;
+    numLineLineCollisions += numLineLineCollisions2;
+    // merge lists
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList0);
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList1);
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList2);
+    IntersectionEventList_appendEventList(intersectionEventList, &eventList3);
   }
+  return numLineLineCollisions; 
 }
+
 
 
