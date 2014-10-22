@@ -30,19 +30,32 @@
 #define MIN(a,b) ((a<b)?a:b)
 #define MAX(a,b) ((a>b)?a:b)
 
+/////////////////////////////////////////////////////////////////////////////////
 // Detect if lines l1 and l2 will intersect between now and the next time step.
+// Return the intersection type of the intersection if there is one, or
+// that there is no intersection if that is the case.
+//
+// l1 -> The first line
+// l2 -> The second line
+// p1 -> The location of the second line's first point after the next timestep
+// p2 -> The location of the second line's second point after the next timestamp
 inline IntersectionType intersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
 
+  // lines intersect before timestep
   if (intersectLines(l1->p1, l1->p2, l2->p1, l2->p2)) {
     return ALREADY_INTERSECTED;
   }
 
+  // There is a parallelogram formed by the motion of the second line.
+  // Passes if the second line completely passes the first line.
   if (pointInParallelogram(l1->p1, l2->p1, l2->p2, p1, p2)
       && pointInParallelogram(l1->p2, l2->p1, l2->p2, p1, p2)) {
     return L1_WITH_L2;
   }
 
+  // Check the number of line intersections, as it is possible
+  // for neither of the two l1 endpoints to be within the l2 parallelogram.
   int num_line_intersections = 0;
   bool top_intersected = false;
   bool bottom_intersected = false;
@@ -62,6 +75,7 @@ inline IntersectionType intersect(Line *l1, Line *l2, Vec p1, Vec p2) {
     bottom_intersected = true;
   }
 
+  // Calculate angle to determine type of intersection.
   Vec v1 = Vec_makeFromLine(*l1);
   Vec v2 = Vec_makeFromLine(*l2);
   double angle = Vec_angle(v1, v2);
@@ -80,23 +94,27 @@ inline IntersectionType intersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   return L1_WITH_L2;
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+// Detect if lines l1 and l2 will intersect between now and the next time step.
+// This is a cursory check whether or not an intersection exists, to be used
+// to determine whether we should perform more calculations to find the exact
+// type of intersection.
+//
+// l1 -> The first line
+// l2 -> The second line
+// p1 -> The location of the second line's first point after the next timestep
+// p2 -> The location of the second line's second point after the next timestamp
 inline IntersectionType fastIntersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   assert(compareLines(l1, l2) < 0);
   
-  // Get relative velocity.
-  // Vec velocity = Vec_subtract(l2->velocity, l1->velocity);
-
+  // Variables to avoid looking up p1 and p2 for lines 1 and 2 each time.
   Vec l1p1 = l1->p1;
   Vec l1p2 = l1->p2;
   Vec l2p1 = l2->p1;
   Vec l2p2 = l2->p2;
 
-  // Get the parallelogram.
-  // Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
-  // Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
-
-
-
+  // Bounding box: check if one line is entirely to one side or the other
+  // of the parallelogram created by the movement of line 2 relative to line 1.
   if (MAX(l1p1.x,l1p2.x) < MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x))) {
     return false;
   }
@@ -110,6 +128,7 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, Vec p1, Vec p2) {
     return false;
   }
 
+  // Check for overlap of line with parallelogram.
   if (pointInParallelogram(l1p1, l2p1, l2p2, p1, p2)) {
     return true;
   }
@@ -128,9 +147,15 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   return false;
 }
 
-// Check if a point is in the parallelogram.
+/////////////////////////////////////////////////////////////////////////////////
+// Checks if a point is in the parallelogram. NOTE: order of points matters
+//
+// point -> the point checked
+// p1 -> corner 1 of the parallelogram
+// p2 -> corner 2 of the parallelogram
+// p3 -> corner 3 of the parallelogram
+// p4 -> corner 4 of the parallelogram
 inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
-  
   double d1 = direction(p1, p2, point);
   double d2 = direction(p3, p4, point);
   double d3 = direction(p1, p3, point);
@@ -142,18 +167,19 @@ inline bool pointInParallelogram(Vec point, Vec p1, Vec p2, Vec p3, Vec p4) {
   return false;
 }
 
-// Check if a point is in a square.
+/////////////////////////////////////////////////////////////////////////////////
+// Checks if a point is in a square.
 inline bool pointInSquare(Vec point, Vec p1, Vec p4) {
   return (point.x >= p1.x && point.x <= p4.x && point.y <=  p4.y && point.y >= p1.y);
 }
 
+/////////////////////////////////////////////////////////////////////////////////
 // Check if two lines intersect.
 inline bool intersectLines(Vec p1, Vec p2, Vec p3, Vec p4) {
   double l1_x_min = MIN(p1.x,p2.x);
   double l1_x_max = MAX(p1.x,p2.x);
   double l1_y_min = MIN(p1.y,p2.y);
   double l1_y_max = MAX(p1.y,p2.y);
-  
   double l2_x_min = MIN(p3.x,p4.x);
   double l2_x_max = MAX(p3.x,p4.x);
   double l2_y_min = MIN(p3.y,p4.y);
