@@ -13,7 +13,7 @@
 
 #include <cilk/reducer_opadd.h>
 
-#define MAX_LINES_PER_NODE 300 // Determined from testing increments of 5 from 280-320
+#define MAX_LINES_PER_NODE 300 // Determined from testing increments of 5 from 100 - 170
 #define MAX_DEPTH 2
 
 #define MIN(x,y) (x < y ? x : y)
