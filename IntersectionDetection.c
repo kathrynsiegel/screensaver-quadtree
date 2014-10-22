@@ -95,21 +95,18 @@ inline IntersectionType fastIntersect(Line *l1, Line *l2, Vec p1, Vec p2) {
   // Vec p1 = Vec_add(l2p1, Vec_multiply(velocity, time));
   // Vec p2 = Vec_add(l2p2, Vec_multiply(velocity, time));
 
-  double par_x_min = MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x));
-  double par_x_max = MAX(MAX(l2p1.x,l2p2.x),MAX(p1.x,p2.x));
-  double par_y_min = MIN(MIN(l2p1.y,l2p2.y),MIN(p1.y,p2.y));
-  double par_y_max = MAX(MAX(l2p1.y,l2p2.y),MAX(p1.y,p2.y));
 
-  if (MAX(l1p1.x,l1p2.x) < par_x_min) {
+
+  if (MAX(l1p1.x,l1p2.x) < MIN(MIN(l2p1.x,l2p2.x),MIN(p1.x,p2.x))) {
     return false;
   }
-  if (MIN(l1p1.x,l1p2.x) > par_x_max) {
+  if (MIN(l1p1.x,l1p2.x) > MAX(MAX(l2p1.x,l2p2.x),MAX(p1.x,p2.x))) {
     return false;
   }
-  if (MAX(l1p1.y,l1p2.y) < par_y_min) {
+  if (MAX(l1p1.y,l1p2.y) < MIN(MIN(l2p1.y,l2p2.y),MIN(p1.y,p2.y))) {
     return false;
   }
-  if (MIN(l1p1.y,l1p2.y) > par_y_max) {
+  if (MIN(l1p1.y,l1p2.y) > MAX(MAX(l2p1.y,l2p2.y),MAX(p1.y,p2.y))) {
     return false;
   }
 
