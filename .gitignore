@@ -1,2 +1,4 @@
 .debug
 *.o
+.__*
+callgrind*
